@@ -15,7 +15,7 @@ setupDirectories();
 const app = express();
 app.use(express.json());
 
-// Process a video file from Cloud Storage into 360p
+// Process a video file from Cloud Storage into 1080p
 app.post('/process-video', async (req, res) => {
 
   // Get the bucket and filename from the Cloud Pub/Sub message
@@ -37,7 +37,7 @@ app.post('/process-video', async (req, res) => {
   // Download the raw video from Cloud Storage
   await downloadRawVideo(inputFileName);
 
-  // Process the video into 360p
+  // Process the video into 1080p
   try { 
     await convertVideo(inputFileName, outputFileName)
   } catch (err) {
