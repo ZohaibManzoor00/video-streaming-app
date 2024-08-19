@@ -1,7 +1,7 @@
 "use client";
 
 import { User } from "firebase/auth";
-import { signInWithGoogle, signOut } from "../_firebase/firebase";
+import { signInWithGoogle, signOut } from "../firebase/firebase";
 
 interface SignInProps {
   user: User | null;

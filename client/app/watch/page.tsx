@@ -1,27 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import SignIn from "../_components/sign-in";
-import { onAuthStateChangedHelper } from "../_firebase/firebase";
-import { User } from "firebase/auth";
-import UploadVideo from "../_components/upload-video";
+import { useSearchParams } from "next/navigation";
 
 export default function Watch() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedHelper((user) => {
-      setUser(user);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const videoPrefix =
+    "https://storage.googleapis.com/marcy-yt-processed-videos/";
+  const videoSrc = useSearchParams().get("v");
 
   return (
-    <>
-      <SignIn user={user} />
-      <div>This is the watch page</div>
-      {user && <UploadVideo />}
-    </>
+    <div>
+      <h1>Watch Page</h1>
+      <div className="max-w-5xl">
+        {<video height={'full'} width={'full'} controls src={videoPrefix + videoSrc} />}
+      </div>
+    </div>
   );
 }
+// 'use client'
+
+// import SignIn from "../components/sign-in";
+// import UploadVideo from "../components/upload-video";
+// import useUser from "../hooks/setUser";
+
+// export default function Watch() {
+//   const { user } = useUser()
+
+//   return (
+//     <>
+//       <SignIn user={user} />
+//       <div>This is the watch page</div>
+//       {user && <UploadVideo />}
+//     </>
+//   );
+// }

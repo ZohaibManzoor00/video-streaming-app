@@ -12,31 +12,33 @@ const storage = new Storage();
 
 const rawVideoBucketName = "marcy-yt-raw-videos";
 
-export const generateUploadUrl = onCall({maxInstances: 1}, async (request) => {
-  if (!request.auth) {
-    throw new functions.https.HttpsError(
-      "failed-precondition",
-      "The function must be called while authenticated."
-    );
+export const generateUploadUrl = onCall(
+  {maxInstances: 1},
+  async (request) => {
+    if (!request.auth) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called while authenticated."
+      );
+    }
+
+    const auth = request.auth;
+    const data = request.data;
+    const bucket = storage.bucket(rawVideoBucketName);
+
+    // Generate a unique filename for upload
+    const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
+
+    // Get a v4 signed URL for uploading file
+    const [url] = await bucket.file(fileName).getSignedUrl({
+      version: "v4",
+      action: "write",
+      expires: Date.now() + 15 * 60 * 1000, // 15 minutes
+    });
+
+    return {url, fileName};
   }
-
-  const auth = request.auth;
-  const data = request.data;
-  const bucket = storage.bucket(rawVideoBucketName);
-
-  // Generate a unique filename for upload
-  const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
-
-  // Get a v4 signed URL for uploading file
-  const [url] = await bucket.file(fileName).getSignedUrl({
-    version: "v4",
-    action: "write",
-    expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-  });
-
-  return {url, fileName};
-});
-
+);
 
 export const createUser = functions.auth.user().onCreate((user) => {
   const userInfo = {
@@ -48,4 +50,24 @@ export const createUser = functions.auth.user().onCreate((user) => {
   firestore.collection("users").doc(user.uid).set(userInfo);
   logger.info(`User Created: ${JSON.stringify(userInfo)}`);
   return;
+});
+
+const videoCollectionId = "videos";
+
+export interface Video {
+  id?: string;
+  uid?: string;
+  filename?: string;
+  status?: "processing" | "processed";
+  title?: string;
+  description?: string;
+}
+
+export const getVideos = onCall({maxInstances: 1}, async () => {
+  const querySnapshot = await firestore
+    .collection(videoCollectionId)
+    .where("status", "==", "processed")
+    .limit(10)
+    .get();
+  return querySnapshot.docs.map((doc) => doc.data());
 });
