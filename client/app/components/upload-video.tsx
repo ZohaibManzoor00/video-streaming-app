@@ -25,13 +25,7 @@ export default function UploadVideo() {
 
   return (
     <>
-      <input
-        id="upload"
-        type="file"
-        accept="video/*"
-        onChange={handleFileChange}
-      />
-      <label htmlFor="upload">
+      <label htmlFor="upload" className="cursor-pointer">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -46,6 +40,13 @@ export default function UploadVideo() {
           />
         </svg>
       </label>
+      <input
+        className="hidden"
+        id="upload"
+        type="file"
+        accept="video/*"
+        onChange={handleFileChange}
+      />
     </>
   );
 }

@@ -11,9 +11,9 @@ export default function SignIn({ user }: SignInProps) {
   return (
     <>
       {user ? (
-        <button onClick={signOut}>Sign Out</button>
+        <button className="text-white" onClick={signOut}>Sign Out</button>
       ) : (
-        <button onClick={signInWithGoogle}>Sign In</button>
+        <button className="text-white" onClick={signInWithGoogle}>Sign In</button>
       )}
     </>
   );

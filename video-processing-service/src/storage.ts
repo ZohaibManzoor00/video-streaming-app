@@ -27,8 +27,14 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
   return new Promise<void>((resolve, reject) => {
     ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
       .outputOptions("-vf", "scale=-1:1080")
+      .on("start", function (commandLine) {
+        console.log("Starting FFmpeg with command: " + commandLine);
+      })
+      .on("progress", function (progress) {
+        console.log("FFmpeg processing: " + progress.percent + "% done");
+      })
       .on("end", function () {
-        console.log("Processing finished successfully");
+        console.log("FFmpeg processing finished successfully");
         resolve();
       })
       .on("error", function (err: any) {

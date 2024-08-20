@@ -1,35 +1,33 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function Watch() {
+function VideoPlayer() {
   const videoPrefix =
     "https://storage.googleapis.com/marcy-yt-processed-videos/";
   const videoSrc = useSearchParams().get("v");
 
+  if (!videoSrc) return <div>Not Found</div>;
+
   return (
-    <div>
-      <h1>Watch Page</h1>
-      <div className="max-w-5xl">
-        {<video height={'full'} width={'full'} controls src={videoPrefix + videoSrc} />}
-      </div>
+    <div className="max-w-5xl">
+      <video
+        height={"full"}
+        width={"full"}
+        controls
+        src={videoPrefix + videoSrc}
+      />
     </div>
   );
 }
-// 'use client'
 
-// import SignIn from "../components/sign-in";
-// import UploadVideo from "../components/upload-video";
-// import useUser from "../hooks/setUser";
-
-// export default function Watch() {
-//   const { user } = useUser()
-
-//   return (
-//     <>
-//       <SignIn user={user} />
-//       <div>This is the watch page</div>
-//       {user && <UploadVideo />}
-//     </>
-//   );
-// }
+export default function Watch() {
+  return (
+    <>
+      <Suspense fallback={<div>Loading...</div>}>
+        <VideoPlayer />
+      </Suspense>
+    </>
+  );
+}
