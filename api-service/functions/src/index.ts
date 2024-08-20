@@ -26,10 +26,10 @@ export const generateUploadUrl = onCall(
     const data = request.data;
     const bucket = storage.bucket(rawVideoBucketName);
 
-    // Generate a unique filename for upload
+    // Generate unique filename for upload
     const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
 
-    // Get a v4 signed URL for uploading file
+    // Get v4 signed URL for uploading file
     const [url] = await bucket.file(fileName).getSignedUrl({
       version: "v4",
       action: "write",
@@ -40,6 +40,7 @@ export const generateUploadUrl = onCall(
   }
 );
 
+// -- USER --
 export const createUser = functions.auth.user().onCreate((user) => {
   const userInfo = {
     uid: user.uid,
@@ -52,8 +53,7 @@ export const createUser = functions.auth.user().onCreate((user) => {
   return;
 });
 
-const videoCollectionId = "videos";
-
+// -- VIDEOS -- 
 export interface Video {
   id?: string;
   uid?: string;
@@ -62,6 +62,8 @@ export interface Video {
   title?: string;
   description?: string;
 }
+
+const videoCollectionId = "videos";
 
 export const getVideos = onCall({maxInstances: 1}, async () => {
   const querySnapshot = await firestore
