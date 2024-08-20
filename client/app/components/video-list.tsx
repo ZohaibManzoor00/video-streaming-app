@@ -1,9 +1,19 @@
 import Link from "next/link";
-import { getVideos } from "../firebase/functions";
 
-export async function VideosList() {
-  const videos = await getVideos();
+interface Video {
+  id?: string;
+  uid?: string;
+  filename?: string;
+  status?: "processing" | "processed";
+  title?: string;
+  description?: string;
+}
 
+interface VideosListProps {
+  videos: Video[];
+}
+
+export default function VideosList({ videos }: VideosListProps) {
   return (
     <div className="">
       {videos.map((video) => (
@@ -16,5 +26,3 @@ export async function VideosList() {
     </div>
   );
 }
-
-export const revalidate = 10; // rerender every 30 sec

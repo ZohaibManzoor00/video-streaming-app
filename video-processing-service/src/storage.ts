@@ -26,12 +26,12 @@ export function setupDirectories() {
 export function convertVideo(rawVideoName: string, processedVideoName: string) {
   return new Promise<void>((resolve, reject) => {
     ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
-      .outputOptions("-vf", "scale=-1:1080")
+      .outputOptions("-vf", "scale=trunc(oh*a/2)*2:1080")
       .on("start", function (commandLine) {
         console.log("Starting FFmpeg with command: " + commandLine);
       })
       .on("progress", function (progress) {
-        console.log("FFmpeg processing: " + progress.percent + "% done");
+        console.log("FFmpeg processing: " + progress.percent?.toFixed(2) + "% done");
       })
       .on("end", function () {
         console.log("FFmpeg processing finished successfully");
@@ -44,6 +44,7 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
       .save(`${localProcessedVideoPath}/${processedVideoName}`);
   });
 }
+
 
 /**
  * @param fileName - The name of the file to download from the
