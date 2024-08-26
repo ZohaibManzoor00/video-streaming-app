@@ -26,7 +26,11 @@ export function setupDirectories() {
 export function convertVideo(rawVideoName: string, processedVideoName: string) {
   return new Promise<void>((resolve, reject) => {
     ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
-      .outputOptions("-vf", "scale=trunc(oh*a/2)*2:1080")
+      .outputOptions(
+        "-vf", "scale=trunc(oh*a/2)*2:1080", // Scaling to 1080p
+        "-preset", "veryfast", // Faster preset
+        "-threads", "0" // Multi-threading
+      )
       .on("start", function (commandLine) {
         console.log("Starting FFmpeg with command: " + commandLine);
       })

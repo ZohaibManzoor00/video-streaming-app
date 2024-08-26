@@ -19,7 +19,7 @@ app.use(express.json());
 
 // Process a video file from Cloud Storage into 1080p
 app.post("/process-video", async (req, res) => {
-  // Get the bucket and filename from the Cloud Pub/Sub message
+  // Get bucket and file name from the Cloud Pub/Sub message
   let data;
   try {
     const message = Buffer.from(req.body.message.data, "base64").toString(
@@ -50,10 +50,10 @@ app.post("/process-video", async (req, res) => {
     });
   }
 
-  // Download the raw video from Cloud Storage
+  // Download raw video from Cloud Storage
   await downloadRawVideo(inputFileName);
 
-  // Process the video into 1080p
+  // Process video into 1080p
   try {
     await convertVideo(inputFileName, outputFileName);
   } catch (err) {
@@ -64,7 +64,7 @@ app.post("/process-video", async (req, res) => {
     return res.status(500).send("Processing failed");
   }
 
-  // Upload the processed video to Cloud Storage
+  // Upload processed video to Cloud Storage
   await uploadProcessedVideo(outputFileName);
 
   await setVideo(videoId, {
