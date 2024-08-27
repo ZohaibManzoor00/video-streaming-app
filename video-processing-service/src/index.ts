@@ -17,9 +17,9 @@ setupDirectories();
 const app = express();
 app.use(express.json());
 
-// Process a video file from Cloud Storage into 1080p
+// Endpoint invoked by pub/sub message to process a video file from Cloud Storage
 app.post("/process-video", async (req, res) => {
-  // Get bucket and file name from the Cloud Pub/Sub message
+  // Get bucket and filename from pub/sub message
   let data;
   try {
     const message = Buffer.from(req.body.message.data, "base64").toString(
@@ -38,6 +38,7 @@ app.post("/process-video", async (req, res) => {
   const outputFileName = `processed-${inputFileName}`;
   const videoId = inputFileName.split(".")[0];
 
+  // Idempotency - safe for pub/sub to repeat requests w/o side effects
   if (!isVideoNew(videoId)) {
     return res
       .status(400)
@@ -67,17 +68,19 @@ app.post("/process-video", async (req, res) => {
   // Upload processed video to Cloud Storage
   await uploadProcessedVideo(outputFileName);
 
+  // Change processing status of video in firestore
   await setVideo(videoId, {
     status: "processed",
     filename: outputFileName,
   });
 
+  // Delete temp files
   await Promise.all([
     deleteRawVideo(inputFileName),
     deleteProcessedVideo(outputFileName),
   ]);
 
-  return res.status(200).send("Processing finished successfully");
+  return res.status(200).send("Video processing finished successfully");
 });
 
 const port = process.env.PORT || 3000;

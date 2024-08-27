@@ -11,10 +11,10 @@ const firestore = new Firestore();
 const storage = new Storage();
 
 const rawVideoBucketName = "marcy-yt-raw-videos";
+const rawImageBucketName = "marcy-yt-raw-images";
 
-export const generateUploadUrl = onCall(
-  {maxInstances: 1},
-  async (request) => {
+export const generateUploadUrl = (fileType: "image" | "video") => {
+  onCall({maxInstances: 1}, async (request) => {
     if (!request.auth) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -24,7 +24,14 @@ export const generateUploadUrl = onCall(
 
     const auth = request.auth;
     const data = request.data;
-    const bucket = storage.bucket(rawVideoBucketName);
+
+    let bucket;
+
+    if (fileType === "image") {
+      bucket = storage.bucket(rawImageBucketName);
+    } else {
+      bucket = storage.bucket(rawVideoBucketName);
+    }
 
     // Generate unique filename for upload
     const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
@@ -37,8 +44,8 @@ export const generateUploadUrl = onCall(
     });
 
     return {url, fileName};
-  }
-);
+  });
+};
 
 // -- USER --
 export const createUser = functions.auth.user().onCreate((user) => {
@@ -53,14 +60,12 @@ export const createUser = functions.auth.user().onCreate((user) => {
   return;
 });
 
-// -- VIDEOS -- 
+// -- VIDEOS --
 export interface Video {
   id?: string;
   uid?: string;
   filename?: string;
   status?: "processing" | "processed";
-  title?: string;
-  description?: string;
 }
 
 const videoCollectionId = "videos";

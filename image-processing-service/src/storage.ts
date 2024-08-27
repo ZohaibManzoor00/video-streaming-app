@@ -1,7 +1,6 @@
 import { Storage } from "@google-cloud/storage";
 import sharp from 'sharp';
 import fs from 'fs';
-import path from 'path';
 
 const storage = new Storage();
 
@@ -69,27 +68,6 @@ export function convertImage(rawImageName: string, processedImageName: string) {
         console.error("Image processing error occurred: " + err.message);
         reject(err);
       });
-    // const readStream = fs.createReadStream(rawImageName);
-    // const writeStream = fs.createWriteStream(processedImageName);
-
-    // // Pipe the read stream through Sharp, then to the write stream
-    // readStream
-    //   .pipe(
-    //     sharp()
-    //       .resize({ width: 800, withoutEnlargement: false }) // Resize the image to 800px width
-    //       .toFormat("jpeg")
-    //       .jpeg({ quality: 80 }) // Compress to 80% quality
-    //   )
-    //   .pipe(writeStream)
-    //   .on("finish", () => {
-    //     console.log("Image processing finished successfully");
-    //     resolve();
-    //   })
-    //   .on("error", (err: any) => {
-    //     console.log("Image processing error occurred: " + err.message);
-    //     reject(err);
-    //   });
-
   });
 }
 
