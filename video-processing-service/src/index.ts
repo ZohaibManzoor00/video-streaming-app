@@ -1,5 +1,4 @@
 import express from "express";
-
 import {
   uploadProcessedVideo,
   downloadRawVideo,
@@ -8,7 +7,6 @@ import {
   convertVideo,
   setupDirectories,
 } from "./storage";
-
 import { isVideoNew, setVideo } from "./firebase";
 
 // Create the local directories for videos
@@ -59,6 +57,10 @@ app.post("/process-video", async (req, res) => {
     await convertVideo(inputFileName, outputFileName);
   } catch (err) {
     await Promise.all([
+      setVideo(videoId, {
+        status: undefined,
+        filename: outputFileName,
+      }),
       deleteRawVideo(inputFileName),
       deleteProcessedVideo(outputFileName),
     ]);
@@ -74,7 +76,7 @@ app.post("/process-video", async (req, res) => {
     filename: outputFileName,
   });
 
-  // Delete temp files
+  // Delete local temp files
   await Promise.all([
     deleteRawVideo(inputFileName),
     deleteProcessedVideo(outputFileName),

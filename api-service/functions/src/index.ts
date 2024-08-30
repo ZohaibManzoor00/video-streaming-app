@@ -10,42 +10,31 @@ initializeApp();
 const firestore = new Firestore();
 const storage = new Storage();
 
-const rawVideoBucketName = "marcy-yt-raw-videos";
-const rawImageBucketName = "marcy-yt-raw-images";
+export const generateUploadUrl = onCall({maxInstances: 1}, async (request) => {
+  if (!request.auth) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "The function must be called while authenticated."
+    );
+  }
 
-export const generateUploadUrl = (fileType: "image" | "video") => {
-  onCall({maxInstances: 1}, async (request) => {
-    if (!request.auth) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "The function must be called while authenticated."
-      );
-    }
+  const auth = request.auth;
+  const data = request.data;
 
-    const auth = request.auth;
-    const data = request.data;
+  const bucket = storage.bucket(data.bucket);
 
-    let bucket;
+  // Generate unique filename for upload
+  const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
 
-    if (fileType === "image") {
-      bucket = storage.bucket(rawImageBucketName);
-    } else {
-      bucket = storage.bucket(rawVideoBucketName);
-    }
-
-    // Generate unique filename for upload
-    const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
-
-    // Get v4 signed URL for uploading file
-    const [url] = await bucket.file(fileName).getSignedUrl({
-      version: "v4",
-      action: "write",
-      expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-    });
-
-    return {url, fileName};
+  // Get v4 signed URL for uploading file
+  const [url] = await bucket.file(fileName).getSignedUrl({
+    version: "v4",
+    action: "write",
+    expires: Date.now() + 15 * 60 * 1000, // 15 minutes
   });
-};
+
+  return {url, fileName};
+});
 
 // -- USER --
 export const createUser = functions.auth.user().onCreate((user) => {
@@ -74,7 +63,7 @@ export const getVideos = onCall({maxInstances: 1}, async () => {
   const querySnapshot = await firestore
     .collection(videoCollectionId)
     .where("status", "==", "processed")
-    .limit(10)
+    // .limit(10)
     .get();
   return querySnapshot.docs.map((doc) => doc.data());
 });

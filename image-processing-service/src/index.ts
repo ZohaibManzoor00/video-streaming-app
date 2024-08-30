@@ -38,13 +38,14 @@ app.post("/process-image", upload.single("image"), async (req, res) => {
   const outputFileName = `processed-${inputFileName}`;
   const imageId = inputFileName.split(".")[0];
 
-  // Idempotency - safe for pub/sub to repeat requests w/o side effects
-  if (!isImageNew(imageId)) {  
+  // Idempotency - safe for pub/sub to repeat the same request w/o side effects
+  if (!isImageNew(imageId)) {
     return res
       .status(400)
-      .send("Bad Request: Video already processing or processed.");
+      .send("Bad Request: Image already processing or processed.");
   } else {
-    await setImage(imageId, { // add 'processing' status to firestore
+    await setImage(imageId, {
+      // add 'processing' status to firestore
       id: imageId,
       uid: imageId.split("-")[0],
       status: "processing",
@@ -60,7 +61,7 @@ app.post("/process-image", upload.single("image"), async (req, res) => {
   } catch (err) {
     await Promise.all([
       setImage(imageId, {
-        status: "failed",
+        status: 'failed',
         filename: outputFileName,
       }),
       deleteRawImage(inputFileName),
@@ -78,6 +79,7 @@ app.post("/process-image", upload.single("image"), async (req, res) => {
     filename: outputFileName,
   });
 
+  // Delete local temp files
   await Promise.all([
     deleteRawImage(inputFileName),
     deleteProcessedImage(outputFileName),

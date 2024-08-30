@@ -27,7 +27,12 @@ export function setImage(imageId: string, image: Image) {
     .set(image, { merge: true })
 }
 
-export async function isImageNew(videoId: string) {
-  const video = await getImage(videoId);
-  return video?.status === undefined;
+export async function isImageNew(imageId: string) {
+  const image = await getImage(imageId);
+  return image?.status === undefined;
+}
+
+export async function isFailedImageUpload(imageId: string) {
+  const image = await getImage(imageId);
+  return image?.status === 'failed';
 }

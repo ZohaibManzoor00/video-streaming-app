@@ -1,6 +1,6 @@
 import { Storage } from "@google-cloud/storage";
-import sharp from 'sharp';
-import fs from 'fs';
+import sharp from "sharp";
+import fs from "fs";
 
 const storage = new Storage();
 
@@ -54,18 +54,19 @@ export async function downloadRawImage(fileName: string) {
  */
 export function convertImage(rawImageName: string, processedImageName: string) {
   return new Promise<void>(async (resolve, reject) => {
-
     sharp(`${localRawImagePath}/${rawImageName}`)
       .resize({ width: 800, withoutEnlargement: true }) // Resize the image to 800px width
-      .toFormat("jpeg") // png to reduce lossy if needed
-      .jpeg({ quality: 100 }) // Compress to 80% quality
+      .toFormat("jpeg") // png to increase lossy if needed
+      .jpeg({ quality: 100 }) // Maintain 100% quality
       .toFile(`${localProcessedImagePath}/${processedImageName}`) // Save the processed image locally
-      .then(() => {
+      .then(async () => {
         console.log("Image processing finished successfully");
+        await deleteRawImageFromBucket(rawImageName);
         resolve();
       })
-      .catch((err: any) => {
+      .catch(async (err: any) => {
         console.error("Image processing error occurred: " + err.message);
+        await deleteRawImageFromBucket(rawImageName);
         reject(err);
       });
   });
@@ -94,6 +95,17 @@ export async function uploadProcessedImage(fileName: string) {
 
 /**
  * @param fileName - The name of the file to delete from the
+ * {@link rawImageBucketName} bucket.
+ * @returns A promise that resolves when the file has been deleted.
+ */
+export async function deleteRawImageFromBucket(fileName: string) {
+  await storage.bucket(rawImageBucketName).file(fileName).delete();
+
+  console.log(`Successfully deleted gs://${rawImageBucketName}/${fileName}`);
+}
+
+/**
+ * @param fileName - The name of the file to delete from the
  * {@link localRawImagePath} folder.
  * @returns A promise that resolves when the file has been deleted.
  *
@@ -113,7 +125,7 @@ export function deleteProcessedImage(fileName: string) {
 }
 
 /**
- * @param filePath - The path of the file to delete.
+ * @param filePath - The local path of the file to delete.
  * @returns A promise that resolves when the file has been deleted.
  */
 function deleteFile(filePath: string): Promise<void> {

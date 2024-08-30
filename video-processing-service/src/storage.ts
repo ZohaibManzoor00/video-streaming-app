@@ -27,28 +27,31 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
   return new Promise<void>((resolve, reject) => {
     ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
       .outputOptions(
-        "-vf", "scale=trunc(oh*a/2)*2:1080", // Scaling to 1080p
-        "-preset", "veryfast", // Faster preset
-        "-threads", "0" // Multi-threading
+        "-vf",
+        "scale=trunc(oh*a/2)*2:1080", // Scaling to 1080p
+        "-preset",
+        "veryfast", // Faster preset
+        "-threads",
+        "0" // Multi-threading
       )
-      .on("start", function (commandLine) {
-        console.log("Starting FFmpeg with command: " + commandLine);
+      .on("progress", (progress) => {
+        console.log(
+          "FFmpeg processing: " + progress.percent?.toFixed(2) + "% done"
+        );
       })
-      .on("progress", function (progress) {
-        console.log("FFmpeg processing: " + progress.percent?.toFixed(2) + "% done");
-      })
-      .on("end", function () {
+      .on("end", async () => {
+        await deleteRawVideoFromBucket(rawVideoName);
         console.log("FFmpeg processing finished successfully");
         resolve();
       })
-      .on("error", function (err: any) {
+      .on("error", async (err: any) => {
+        await deleteRawVideoFromBucket(rawVideoName);
         console.log("An error occurred: " + err.message);
         reject(err);
       })
       .save(`${localProcessedVideoPath}/${processedVideoName}`);
   });
 }
-
 
 /**
  * @param fileName - The name of the file to download from the
@@ -88,6 +91,17 @@ export async function uploadProcessedVideo(fileName: string) {
 
   // Set the video to be publicly readable
   await bucket.file(fileName).makePublic();
+}
+
+/**
+ * @param fileName - The name of the file to delete from the
+ * {@link rawVideoBucketName} bucket.
+ * @returns A promise that resolves when the file has been deleted.
+ */
+export async function deleteRawVideoFromBucket(fileName: string) {
+  await storage.bucket(rawVideoBucketName).file(fileName).delete();
+
+  console.log(`Successfully deleted gs://${rawVideoBucketName}/${fileName}`);
 }
 
 /**
