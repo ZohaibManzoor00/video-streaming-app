@@ -1,5 +1,7 @@
+"use client";
+
 import Navbar from "./_components/navbar";
-import Sidebar from "./_components/sidebar";
+import { AuthProvider } from "@/context/authContext";
 
 export default function DashboardLayout({
   children,
@@ -7,14 +9,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-full">
-      <div className="h-[76.5px] md:pl-56 fixed inset-y-0 w-full z-50">
+    <AuthProvider>
+      <div className="min-h-screen flex flex-col items-center">
         <Navbar />
+        <main className="max-w-6xl mt-10">{children}</main>
       </div>
-      <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
-        <Sidebar />
-      </div>
-      <main className="md:pl-56 h-full pt-[76px]">{children}</main>
-    </div>
+    </AuthProvider>
   );
 }

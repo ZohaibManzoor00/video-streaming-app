@@ -1,8 +1,8 @@
 "use client";
 
-import { uploadVideo } from "../firebase/functions";
+import { uploadImage } from "../firebase/functions";
 
-export default function UploadVideo() {
+export default function UploadImage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
     if (file) handleUpload(file);
@@ -10,10 +10,10 @@ export default function UploadVideo() {
 
   const handleUpload = async (file: File) => {
     try {
-      const response = await uploadVideo(file);
+      const response = await uploadImage(file);
       alert(
         // TODO: Change from alert to logs
-        `File uploaded successfully. Server responded with: ${JSON.stringify(
+        `Image uploaded successfully. Server responded with: ${JSON.stringify(
           response
         )}`
       );
@@ -24,8 +24,8 @@ export default function UploadVideo() {
 
   return (
     <div className="flex gap-x-2">
-      <p>Upload Video</p>
-      <label htmlFor="uploadVideo" className="cursor-pointer">
+      <p>Upload Image</p>
+      <label htmlFor="uploadImage" className="cursor-pointer">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -42,9 +42,9 @@ export default function UploadVideo() {
       </label>
       <input
         className="hidden"
-        id="uploadVideo"
+        id="uploadImage"
         type="file"
-        accept="video/*"
+        accept="image/*"
         onChange={handleFileChange}
       />
     </div>

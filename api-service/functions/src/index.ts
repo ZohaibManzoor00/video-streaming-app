@@ -50,20 +50,23 @@ export const createUser = functions.auth.user().onCreate((user) => {
 });
 
 // -- VIDEOS --
-export interface Video {
-  id?: string;
-  uid?: string;
-  filename?: string;
-  status?: "processing" | "processed";
-}
-
 const videoCollectionId = "videos";
 
 export const getVideos = onCall({maxInstances: 1}, async () => {
   const querySnapshot = await firestore
     .collection(videoCollectionId)
     .where("status", "==", "processed")
-    // .limit(10)
+    .get();
+  return querySnapshot.docs.map((doc) => doc.data());
+});
+
+// -- Images --
+const imageCollectionId = "images";
+
+export const getImages = onCall({maxInstances: 1}, async () => {
+  const querySnapshot = await firestore
+    .collection(imageCollectionId)
+    .where("status", "==", "processed")
     .get();
   return querySnapshot.docs.map((doc) => doc.data());
 });

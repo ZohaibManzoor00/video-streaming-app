@@ -1,24 +1,37 @@
 "use client";
 
-import { User } from "firebase/auth";
+import Image from "next/image";
 import { signInWithGoogle, signOut } from "../app/firebase/firebase";
+import { useAuthContext } from "@/context/authContext";
 
-interface SignInProps {
-  user: User | null;
-}
+export default function SignInOut() {
+  const { user, loading } = useAuthContext();
 
-export default function SignIn({ user }: SignInProps) {
+  if (loading) return <div>Loading...</div>;
 
   return (
     <>
       {user ? (
+        <>
           <button className="text-white" onClick={signOut}>
-            Sign Out
+            <Image
+              src={user.photoURL || ""}
+              alt="User image"
+              width={50}
+              height={50}
+              className="rounded-full"
+            />
           </button>
+        </>
       ) : (
-        <button className="text-white" onClick={signInWithGoogle}>
-          Sign In
-        </button>
+        <>
+          <button className="bg-emerald-600 rounded-full py-3 px-6 text-sm mr-2">
+            Join Now
+          </button>
+          <button className="text-white opacity-70" onClick={signInWithGoogle}>
+            Login
+          </button>
+        </>
       )}
     </>
   );

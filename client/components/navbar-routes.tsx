@@ -1,52 +1,56 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-import { Button } from "./ui/button";
-import { LogOut } from "lucide-react";
 import DarkModeToggler from "./dark-mode-toggler";
-// import SearchInput from "./search-input";
-import { isTeacher } from "@/lib/teacher";
-import useAuth from "@/app/hooks/useAuth";
-import SignIn from "./sign-in";
-import UploadVideo from "@/app/_components/upload-video";
+import SignInOut from "./sign-in";
+import { upperCaseFirstChar } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { useAuthContext } from "@/context/authContext";
+import { SearchIcon } from "lucide-react";
+
+interface Route {
+  href: string;
+  name: string;
+}
+
+const routes = [
+  { href: "/features", name: "features" },
+  { href: "/courses", name: "courses" },
+  { href: "/learn", name: "learn" },
+  { href: "/blogs", name: "blogs" },
+];
 
 export default function NavbarRoutes() {
-  const { user } = useAuth();
   const pathname = usePathname();
-
-  const isTeacherPage = pathname?.startsWith("/teacher");
-  const isCoursePage = pathname?.includes("/courses");
-  const isPathwayPage = pathname?.startsWith("/pathways");
-  const isDashboard = pathname === "/";
+  const { user } = useAuthContext();
 
   return (
-    <>
-      {(isPathwayPage || isDashboard) && (
-        <div className="hidden md:block">{/* <SearchInput /> */}Search...</div>
-      )}
-      <div className="flex gap-x-2 ml-auto items-center">
-        {isTeacherPage || isCoursePage ? (
-          <Link href="/">
-            <Button className="sm" variant="ghost">
-              <LogOut className="h-4 mr-2 w-4" />
-              Exit
-            </Button>
-          </Link>
-        ) : isTeacher() ? (
-          <Link href="/teacher/courses">
-            <Button className="sm" variant="ghost">
-              Teacher Mode
-            </Button>
-          </Link>
-        ) : null}
-        {user && <UploadVideo />}
-        <DarkModeToggler />
-        <div className="mt-1">
-          <SignIn user={user} />
+    <div className="w-full bg-emerald-900">
+      <div className="max-w-6xl m-auto flex items-center h-16 px-3">
+        <p className="text-2xl font">Full Stack Marcy</p>
+        <div className="flex items-center ml-16">
+          {routes.map((route: Route) => (
+            <ul key={route.href} className="mx-5">
+              <li
+                className={pathname === route.href ? "text-lg" : "opacity-60"}
+              >
+                {user && route.href === "/" ? (
+                  <Link href="/dashboard" className="cursor-hover">
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link href={route.href} className="cursor-hover">
+                    {upperCaseFirstChar(route.name)}
+                  </Link>
+                )}
+              </li>
+            </ul>
+          ))}
+        </div>
+        <div className="flex gap-x-2 items-center ml-auto">
+          <SearchIcon className="mr-2"/>
+          <SignInOut />
         </div>
       </div>
-    </>
+      <div className="bg-lime-700 h-[3px]" />
+    </div>
   );
 }
