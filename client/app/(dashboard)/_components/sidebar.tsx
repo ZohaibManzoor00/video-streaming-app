@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import SidebarRoutes from "./sidebar-routes";
+// import SidebarRoutes from "./sidebar-routes";
 // import Logo from "./logo";
 import { WholeWord } from "lucide-react";
 
@@ -42,7 +42,7 @@ export default function Sidebar() {
         </Link>
       </div>
       <div className="flex flex-col w-full">
-        <SidebarRoutes />
+        {/* <SidebarRoutes />  TODO: Fix Mobile and add these routes */}
       </div>
       <div className="flex flex-col w-full pt-10 pb-4 mt-auto mb-2">
         <div className="container px-4 text-sm md:px-6">
