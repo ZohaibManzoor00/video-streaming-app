@@ -1,6 +1,6 @@
 import Image from "next/image";
-import CallToActionButtons from "../../_components/call-to-action-buttons";
-import DailyMessage from "../../_components/daily-message";
+import CallToActionButtons from "../_components/call-to-action-buttons";
+import DailyMessage from "../_components/daily-message";
 
 export default function Home() {
   return (
