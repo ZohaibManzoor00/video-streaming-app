@@ -1,4 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-  
+
+.dot-grid {
+  background-image: radial-gradient(black, transparent 30%);
+  background-size: 3px 3px;
+  opacity: 0.7;
+}

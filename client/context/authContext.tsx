@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext } from "react";
 import { User } from "firebase/auth";
 import useAuth from "@/app/hooks/useAuth";
@@ -7,9 +9,7 @@ const AuthContext = createContext<{ user: User | null; loading: boolean }>({
   loading: true,
 });
 
-export const AuthProvider = ({
-  children,
-}: Readonly<{ children: React.ReactNode }>) => {
+export const AuthProvider = ({ children }: Readonly<{ children: React.ReactNode }>) => {
   const auth = useAuth();
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 };

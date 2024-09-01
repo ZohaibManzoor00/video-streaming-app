@@ -1,14 +1,38 @@
-export default async function Home() {
+import CallToActionButtons from "../../_components/call-to-action-buttons";
+
+export default function Home() {
   return (
-    <div className="px-3">
-      <div className="text-5xl">Home page</div>
-      <h1>Add BG Video</h1>
-      <p>
-        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Necessitatibus
-        voluptates accusamus laudantium unde atque repellat dolores tenetur
-        placeat reprehenderit facilis, excepturi minus voluptatem, sequi hic
-        architecto delectus! Dolorum, maxime exercitationem!
-      </p>
+    <div className="text-white">
+      <div className="relative h-[400px] overflow-hidden">
+        <video
+          className="absolute top-0 left-0 w-full h-full object-cover"
+          src="/intro-video.mp4"
+          autoPlay
+          loop
+          muted
+        />
+
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none dot-grid" />
+
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
+          <h1 className="text-5xl font font-extrabold mt-4">
+            Your Path to Fullstack Dev and Beyond
+          </h1>
+          <h1 className="mt-4 mb-3 text-2xl font-bold">
+            In-Depth Frontend, Backend, and Fullstack Courses
+          </h1>
+          <CallToActionButtons />
+        </div>
+      </div>
+      <div className="text-center">
+        <h1 className="mt-20 text-4xl mb-2">
+          Gain Practical Tech Skills from Experts You Can Trust
+        </h1>
+        <p className="text-lg">
+          JavaScript, React, OOP, DSA and Backend (Express, SQL, PostgreSQL, &
+          More)
+        </p>
+      </div>
     </div>
   );
 }

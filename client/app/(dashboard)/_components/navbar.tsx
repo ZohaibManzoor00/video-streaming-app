@@ -1,5 +1,5 @@
-import NavbarRoutes from "@/components/navbar-routes";
 import MobileSidebar from "./mobile-sidebar";
+import NavbarRoutes from "./navbar-routes";
 
 export default function Navbar() {
   return (
