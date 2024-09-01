@@ -9,7 +9,7 @@ export default function NavbarRoutes() {
     <div className="w-full text-white">
       <div className="max-w-6xl m-auto flex items-center h-16 px-3">
         <p className="text-2xl font">Full Stack Marcy</p>
-        <div className="flex items-center ml-16">
+        <div className="flex items-center ml-10">
           <NavRoutes />
         </div>
         <div className="flex gap-x-2 items-center ml-auto">

@@ -23,9 +23,12 @@ export default function NavRoutes() {
 
   return (
     <>
-      {navRoutes.map((route: Route) => (
-        <ul key={route.href} className="mx-5">
-          <li className={pathname === route.href ? "text-lg" : "opacity-60"}>
+      <ul className="gap-x-5 flex">
+        {navRoutes.map((route: Route) => (
+          <li
+            key={route.href}
+            className={pathname === route.href ? "text-lg" : "opacity-60"}
+          >
             {user && route.href === "/" ? (
               <Link href="/dashboard" className="cursor-hover">
                 Dashboard
@@ -36,8 +39,8 @@ export default function NavRoutes() {
               </Link>
             )}
           </li>
-        </ul>
-      ))}
+        ))}
+      </ul>
     </>
   );
 }
