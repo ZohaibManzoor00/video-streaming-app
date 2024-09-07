@@ -29,7 +29,7 @@ export default function Dropdown({
     <div ref={dropdownRef} className="z-50 relative inline-block text-left">
       <button
         onClick={toggleDropdown}
-        className={`inline-flex items-center justify-center w-full gap-x-1 border-2 border-secondary-${secondary} rounded-md shadow-sm px-2 py-1 text-sm font-medium`}
+        className={`inline-flex items-center justify-center w-full gap-x-1 border-2 border-secondary-${secondary} rounded-sm shadow-sm px-2 py-1 text-sm font-medium`}
       >
         Theme
       </button>

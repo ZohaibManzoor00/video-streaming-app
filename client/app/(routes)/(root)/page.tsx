@@ -1,6 +1,6 @@
 import Image from "next/image";
-import CallToActionButtons from "../../_components/call-to-action-buttons";
-import DailyMessage from "../../_components/daily-message";
+import CallToActionButtons from "../_components/call-to-action-buttons";
+import DailyMessage from "../_components/daily-message";
 
 export default function Home() {
   return (
@@ -16,7 +16,7 @@ export default function Home() {
 
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none dot-grid" />
 
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 text-white">
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 text-slate-200">
           <h1 className="text-5xl font font-medium mt-4">
             Your Path to Fullstack Dev and Beyond
           </h1>
@@ -26,7 +26,7 @@ export default function Home() {
           <CallToActionButtons />
         </div>
       </div>
-      <div className="relative flex justify-center">
+      <div className="relative flex justify-center max-w-5xl mx-auto">
         <div className="absolute -top-8 bg-gray-900 opacity-80 py-5 px-8 w-3/4">
           <DailyMessage />
         </div>

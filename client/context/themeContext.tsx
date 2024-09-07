@@ -26,20 +26,15 @@ const ThemeContext = createContext<ThemeContextProps>({
 });
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [primary, setPrimary] = useState<string | null>(null);
-  const [secondary, setSecondary] = useState<string | null>(null);
+  const [primary, setPrimary] = useState<string>("slate");
+  const [secondary, setSecondary] = useState<string>("green");
 
   useEffect(() => {
-    const storedPrimary = localStorage.getItem("primaryColor") || "slate";
-    const storedSecondary = localStorage.getItem("secondaryColor") || "green";
+    const storedPrimary = localStorage.getItem("primaryColor");
+    const storedSecondary = localStorage.getItem("secondaryColor");
 
-    if (!validColors.includes(storedPrimary))
-      localStorage.setItem("primaryColor", "slate");
-    if (!validColors.includes(storedSecondary))
-      localStorage.setItem("secondaryColor", "green");
-
-    setPrimary(storedPrimary || "slate");
-    setSecondary(storedSecondary || "green");
+    if (storedPrimary && storedPrimary !== primary && validColors.includes(storedPrimary))setPrimary(storedPrimary);
+    if (storedSecondary && storedSecondary !== primary && validColors.includes(storedSecondary))setPrimary(storedSecondary);
   }, []);
 
   useEffect(() => {
@@ -53,13 +48,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("secondaryColor", secondary);
   }, [secondary]);
 
-  if (!primary || !secondary) return null;
-
   return (
     <ThemeContext.Provider
       value={{ primary, secondary, setPrimary, setSecondary }}
     >
-      <div className={`bg-primary-${primary} border-secondary-${secondary}`}>{children}</div>
+      <div className={`bg-primary-${primary} border-secondary-${secondary}`}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 };

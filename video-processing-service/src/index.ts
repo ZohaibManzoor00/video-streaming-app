@@ -36,7 +36,7 @@ app.post("/process-video", async (req, res) => {
   const outputFileName = `processed-${inputFileName}`;
   const videoId = inputFileName.split(".")[0];
 
-  // Idempotency - safe for pub/sub to repeat requests w/o side effects
+  // Idempotent - safe for pub/sub to repeat requests w/o side effects
   if (!isVideoNew(videoId)) {
     return res
       .status(400)

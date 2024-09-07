@@ -20,6 +20,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 export const functions = getFunctions();
+export const rawVideoBucketName = "marcy-yt-raw-videos";
+export const rawImageBucketName = "marcy-yt-raw-images";
 
 /**
  * Signs the user in with a Google popup.

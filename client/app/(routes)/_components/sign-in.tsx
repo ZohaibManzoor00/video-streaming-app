@@ -1,17 +1,30 @@
 "use client";
 
-import Image from "next/image";
-import { useAuthContext } from "@/context/authContext";
-import { useTheme } from "@/context/themeContext";
 import { signOut, signInWithGoogle } from "@/app/firebase/firebase";
+import { useState } from "react";
+import { useAuthContext } from "@/context/authContext";
+import Image from "next/image";
+import { useTheme } from "@/context/themeContext";
+import { useRouter } from "next/navigation";
 
 export default function SignInOut() {
   const { user, loading } = useAuthContext();
   const { secondary } = useTheme();
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>; // TODO: Pulse load image
 
   const needsDarkText = ["slate", "pink", "yellow"];
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError("Failed to sign in. Please try again." + err);
+    }
+  };
 
   return (
     <>
@@ -36,8 +49,8 @@ export default function SignInOut() {
           >
             Join Now
           </button>
-          <button className="text-white opacity-70" onClick={signInWithGoogle}>
-            Login
+          <button className="text-white opacity-70" onClick={handleSignIn}>
+            {error ? "Try Again?" : "Login"}
           </button>
         </>
       )}

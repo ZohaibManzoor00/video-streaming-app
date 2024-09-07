@@ -1,14 +1,17 @@
+import Link from "next/link";
 import SignInOut from "./sign-in";
 import NavRoutes from "./nav-routes";
-import { SearchIcon } from "lucide-react";
 import NavSecondaryColorBar from "./random-color-bar";
 import ThemeSelector from "./theme-selector";
+import { SearchIcon } from "lucide-react";
 
 export default function NavbarRoutes() {
   return (
-    <div className="w-full text-white">
-      <div className="max-w-6xl m-auto flex items-center h-16 px-3">
-        <p className="text-2xl font">Full Stack Marcy</p>
+    <div className="w-full text-slate-100">
+      <div className="max-w-7xl m-auto flex items-center h-16 px-6">
+        <Link href="/" className="cursor-hover text-slate-100 text-2xl">
+          Fullstack Marcy
+        </Link>
         <div className="flex items-center ml-10">
           <NavRoutes />
         </div>
