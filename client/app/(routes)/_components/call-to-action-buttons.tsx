@@ -1,9 +1,5 @@
-"use client";
-
-import { useTheme } from "@/context/themeContext";
+import { DynamicButton } from "@/components/dynamic-wrappers";
 import { cn } from "@/lib/utils";
-
-const needsBlackText = ["slate", "pink"];
 
 type CallToActionButtonsProps = {
   priorityStyles?: string;
@@ -12,22 +8,17 @@ type CallToActionButtonsProps = {
 export default function CallToActionButtons({
   priorityStyles,
 }: CallToActionButtonsProps) {
-  const { primary, secondary } = useTheme();
-
   return (
     <div className={cn("flex gap-x-6 w-full justify-center", priorityStyles)}>
-      <button
-        className={`bg-primary-${primary} min-w-56 rounded-full py-3 px-6 text-lg`}
-      >
+      <DynamicButton styles={"min-w-56 rounded-full py-3 px-6 text-slate-200"}>
         Browse Courses
-      </button>
-      <button
-        className={`bg-secondary-${secondary} min-w-56 rounded-full py-3 px-6 text-lg ${
-          needsBlackText.includes(secondary) ? "text-black" : "text-white"
-        }`}
+      </DynamicButton>
+      <DynamicButton
+        styles={"min-w-56 rounded-full py-3 px-6 text-lg"}
+        buttonType="cta"
       >
         View Learning Paths
-      </button>
+      </DynamicButton>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export async function uploadVideo(file: File) {
     bucket: rawVideoBucketName,
   });
 
-  // Upload file to signed URL
+  // Upload file to raw g-cloud bucket via signed URL
   const uploadResult = await fetch(response?.data?.url, {
     method: "PUT",
     body: file,

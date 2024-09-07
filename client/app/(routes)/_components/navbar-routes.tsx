@@ -7,9 +7,9 @@ import { SearchIcon } from "lucide-react";
 
 export default function NavbarRoutes() {
   return (
-    <div className="w-full text-white">
-      <div className="max-w-6xl m-auto flex items-center h-16 px-3">
-        <Link href="/" className="cursor-hover text-white text-2xl">
+    <div className="w-full text-slate-100">
+      <div className="max-w-7xl m-auto flex items-center h-16 px-6">
+        <Link href="/" className="cursor-hover text-slate-100 text-2xl">
           Fullstack Marcy
         </Link>
         <div className="flex items-center ml-10">
