@@ -1,9 +1,14 @@
 "use client";
 
-import { uploadVideo } from "@/app/firebase/functions";
+import { uploadVideo } from "@/app/firebase/videos";
 import { DynamicBorder } from "@/components/dynamic-wrappers";
+import { useState } from "react";
 
 export default function UploadVideo() {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [processing, setProcessing] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
     if (file) handleUpload(file);
@@ -11,12 +16,10 @@ export default function UploadVideo() {
 
   const handleUpload = async (file: File) => {
     try {
-      const response = await uploadVideo(file);
+      const response = await uploadVideo(file)
       alert(
         // TODO: Change from alert to logs
-        `File uploaded successfully. Server responded with: ${JSON.stringify(
-          response
-        )}`
+        "File uploaded successfully"
       );
     } catch (error) {
       alert(`Failed to upload file: ${error}`);

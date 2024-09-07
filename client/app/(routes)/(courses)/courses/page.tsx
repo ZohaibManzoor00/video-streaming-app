@@ -2,7 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import UploadVideo from "../_components/upload-video";
 import UploadImage from "../_components/upload-image";
-import { getImages, getVideos } from "@/app/firebase/functions";
+import { getImages } from "@/app/firebase/images";
+import { getVideos } from "@/app/firebase/videos";
+import VideosList from "../_components/video-list";
 
 export default async function CoursesPage() {
   const [videos, images] = await Promise.all([getVideos(), getImages()]);
@@ -12,6 +14,10 @@ export default async function CoursesPage() {
       <div className="flex gap-x-5">
         <UploadVideo />
         <UploadImage />
+      </div>
+
+      <div className="w-1/6 mx-auto">
+        <VideosList videos={videos} />
       </div>
     </>
   );

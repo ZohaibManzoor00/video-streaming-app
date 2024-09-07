@@ -1,3 +1,5 @@
+import VideoPlayer from "../_components/video-player";
+
 export default function ChapterPage() {
-  return <div>ChapterPage</div>;
+  return <VideoPlayer />;
 }
