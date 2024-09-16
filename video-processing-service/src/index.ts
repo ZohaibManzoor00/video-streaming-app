@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import {
   uploadProcessedVideo,
   downloadRawVideo,
@@ -7,16 +7,17 @@ import {
   convertVideo,
   setupDirectories,
 } from "./storage";
-import { isVideoNew, setVideo } from "./firebase";
 
-// Create the local directories for videos
+import { handleError, isVideoNew, handleVideoProgress } from "./firebase";
+
+// Create the local directories for processing locally
 setupDirectories();
 
 const app = express();
 app.use(express.json());
 
-// Endpoint invoked by pub/sub message to process a video file from Cloud Storage
-app.post("/process-video", async (req, res) => {
+// Endpoint invoked by pub/sub message when raw video is uploaded Cloud Storage Bucket
+app.post("/process-video", async (req: Request, res: Response) => {
   // Get bucket and filename from pub/sub message
   let data;
   try {
@@ -36,45 +37,59 @@ app.post("/process-video", async (req, res) => {
   const outputFileName = `processed-${inputFileName}`;
   const videoId = inputFileName.split(".")[0];
 
-  // Idempotent - safe for pub/sub to repeat requests w/o side effects
-  if (!isVideoNew(videoId)) {
+  // Idempotent - safe for pub/sub to repeat same request w/o side effects
+  if (!(await isVideoNew(videoId))) {
     return res
       .status(400)
       .send("Bad Request: video already processing or processed.");
-  } else {
-    await setVideo(videoId, {
-      id: videoId,
-      uid: videoId.split("-")[0],
-      status: "processing",
-    });
   }
 
+  await handleVideoProgress(videoId, "processing", "initializing");
+
   // Download raw video from Cloud Storage
-  await downloadRawVideo(inputFileName);
+  try {
+    await handleVideoProgress(videoId, "processing", "downloading");
+    await downloadRawVideo(inputFileName);
+  } catch (err) {
+    return handleError(
+      res,
+      videoId,
+      "Download failed",
+      inputFileName,
+      outputFileName
+    );
+  }
 
   // Process video into 1080p
   try {
+    await handleVideoProgress(videoId, "processing", "processing");
     await convertVideo(inputFileName, outputFileName);
   } catch (err) {
-    await Promise.all([
-      setVideo(videoId, {
-        status: 'failed',
-        filename: outputFileName,
-      }),
-      deleteRawVideo(inputFileName),
-      deleteProcessedVideo(outputFileName),
-    ]);
-    return res.status(500).send("Processing failed");
+    return handleError(
+      res,
+      videoId,
+      "Processing failed",
+      inputFileName,
+      outputFileName
+    );
   }
 
   // Upload processed video to Cloud Storage
-  await uploadProcessedVideo(outputFileName);
+  try {
+    await handleVideoProgress(videoId, "processing", "uploading");
+    await uploadProcessedVideo(outputFileName);
+  } catch (err) {
+    return handleError(
+      res,
+      videoId,
+      "Upload failed",
+      inputFileName,
+      outputFileName
+    );
+  }
 
-  // Change processing status of video in firestore
-  await setVideo(videoId, {
-    status: "processed",
-    filename: outputFileName,
-  });
+  // Change processing status in firestore
+  await handleVideoProgress(videoId, "processed", "complete", outputFileName);
 
   // Delete local temp files
   await Promise.all([
