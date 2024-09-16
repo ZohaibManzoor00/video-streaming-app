@@ -10,13 +10,10 @@ export default function VideoPlayer() {
   if (!videoSrc) return <div>Not Found</div>;
 
   return (
-    <div className="max-w-5xl">
-      <video
-        height={"full"}
-        width={"full"}
-        controls
-        src={videoPrefix + videoSrc}
-      />
-    </div>
+    <video
+      className="h-full w-full object-contain"
+      controls
+      src={videoPrefix + videoSrc}
+    />
   );
 }

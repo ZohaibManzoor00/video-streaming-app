@@ -57,10 +57,6 @@ app.post("/process-video", async (req, res) => {
     await convertVideo(inputFileName, outputFileName);
   } catch (err) {
     await Promise.all([
-      setVideo(videoId, {
-        status: 'failed',
-        filename: outputFileName,
-      }),
       deleteRawVideo(inputFileName),
       deleteProcessedVideo(outputFileName),
     ]);

@@ -4,7 +4,7 @@ import NavRoutes from "./nav-routes";
 export default function Footer() {
   return (
     <div className="bg-black w-full mt-auto">
-      <div className="pt-16 max-w-6xl mx-auto">
+      <div className="pt-16 mx-auto max-w-7xl px-6">
         <Link href="/" className="cursor-hover text-white text-2xl">
           The Marcy Lab School
         </Link>

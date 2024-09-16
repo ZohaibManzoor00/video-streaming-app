@@ -26,8 +26,8 @@ const ThemeContext = createContext<ThemeContextProps>({
 });
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [primary, setPrimary] = useState<string>("slate");
-  const [secondary, setSecondary] = useState<string>("green");
+  const [primary, setPrimary] = useState<string>(localStorage.getItem("primaryColor") || "slate");
+  const [secondary, setSecondary] = useState<string>(localStorage.getItem("secondaryColor") || "green");
 
   useEffect(() => {
     const storedPrimary = localStorage.getItem("primaryColor");

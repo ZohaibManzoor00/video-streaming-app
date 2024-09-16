@@ -53,6 +53,5 @@ export function DynamicButton({
 
 export function DynamicText({ children, styles }: DynamicProps) {
   const { secondary } = useTheme(); // doesn't pick up change on initial color
-  console.log(`text-secondary-${secondary}`)
   return <p className={`text-secondary-${secondary}`}>{children}</p>;
 }
