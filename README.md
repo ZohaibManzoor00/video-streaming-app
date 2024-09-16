@@ -1,5 +1,6 @@
 # Video Processing & Streaming App
 ![image info](./design.png)
+A microservice architecture for a video streaming app using Next.js, Docker, Google Cloud, and Firebase Functions. Leveraging a message queue (Pub/Sub) for event-driven processing, FFmpeg for video transcoding, and Firestore for managing metadata.
 
 ## Uploading Video Flow:
 1. Signed-in users upload videos via Next.js. A Firebase function generates a signed URL for Google Cloud, allowing the video to be uploaded to the ‘raw videos’ bucket.
