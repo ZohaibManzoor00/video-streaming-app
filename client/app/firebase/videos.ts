@@ -43,8 +43,8 @@ export async function uploadVideo(file: File) {
 }
 
 export async function checkVideoStatus(fileName: any) {
-  const status = await checkVideoStatusFunction({ fileName });
-  return status;
+  const res = await checkVideoStatusFunction({ fileName });
+  return res.data as { status: Video["status"], progress: Video["progress"]};
 }
 
 export async function getVideos() {
