@@ -8,7 +8,12 @@ import {
   setupDirectories,
 } from "./storage";
 
-import { handleError, isVideoNew, handleVideoProgress } from "./firebase";
+import {
+  handleError,
+  isVideoNew,
+  handleVideoProgress,
+  setVideo,
+} from "./firebase";
 
 // Create the local directories for processing locally
 setupDirectories();
@@ -44,7 +49,12 @@ app.post("/process-video", async (req: Request, res: Response) => {
       .send("Bad Request: video already processing or processed.");
   }
 
-  await handleVideoProgress(videoId, "processing", "initializing");
+  await setVideo(videoId, {
+    id: videoId,
+    uid: videoId.split("-")[0],
+    status: "processing",
+    progress: "initializing",
+  });
 
   // Download raw video from Cloud Storage
   try {

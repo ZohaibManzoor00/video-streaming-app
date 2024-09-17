@@ -2,14 +2,18 @@
 import { DynamicBorder } from "@/components/dynamic-wrappers";
 import Link from "next/link";
 
-interface Video {
+type Video = {
   id?: string;
   uid?: string;
   filename?: string;
-  status?: "processing" | "processed";
-  title?: string;
-  description?: string;
-}
+  status?: "processing" | "processed" | "failed";
+  progress?:
+    | "initializing"
+    | "downloading"
+    | "processing"
+    | "uploading"
+    | "complete";
+};
 
 interface VideosListProps {
   videos: Video[];
