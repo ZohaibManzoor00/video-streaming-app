@@ -3,6 +3,7 @@ import { functions } from "./firebase";
 
 const generateUploadUrlFunction = httpsCallable(functions, "generateUploadUrl");
 const getVideosFunction = httpsCallable(functions, "getVideos");
+const checkVideoStatusFunction = httpsCallable(functions, "checkVideoStatus");
 
 const rawVideoBucketName = "marcy-yt-raw-videos";
 
@@ -36,19 +37,15 @@ export async function uploadVideo(file: File) {
 
   if (!uploadResult.ok) throw new Error("Failed Upload");
 
-  const fileName = response.data?.fileName?.split(".")[0] || "";
+  const filename = response.data?.fileName?.split(".")[0] || "";
 
-  return { fileName };
+  return { filename };
 }
 
-// export async function getVideoProcessingStatus(
-//   fileName: any,
-//   collectionId: string
-// ) {
-//   const res = await checkProcessingStatusFunction({ fileName, collectionId });
-//   const video = res.data as Video;
-//   return video?.status;
-// }
+export async function checkVideoStatus(fileName: any) {
+  const status = await checkVideoStatusFunction({ fileName });
+  return status;
+}
 
 export async function getVideos() {
   const res = await getVideosFunction();

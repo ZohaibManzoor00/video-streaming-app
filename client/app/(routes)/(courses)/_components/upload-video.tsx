@@ -16,8 +16,9 @@ export default function UploadVideo() {
 
   const handleUpload = async (file: File) => {
     try {
-      const { fileName } = await uploadVideo(file)
+      const { filename } = await uploadVideo(file)
       // poll firestore
+      
       alert(
         // TODO: Change from alert to logs
         "File uploaded successfully"

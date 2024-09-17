@@ -59,9 +59,30 @@ export const getVideos = onCall({maxInstances: 1}, async () => {
   return querySnapshot.docs.map((doc) => doc.data());
 });
 
-export const checkVideoStatus = onCall({maxInstances: 1}, async () => {
-  
-})
+export const checkVideoStatus = onCall(
+  {maxInstances: 1}, async (request) => {
+    if (!request.auth) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called while authenticated."
+      );
+    }
+
+    const {fileName} = request.data;
+
+    const doc = await firestore
+      .collection(videoCollectionId).doc(fileName).get();
+
+    if (!doc.exists) {
+      // If metadata hasn't been written yet
+      return {status: "pending"};
+    }
+
+    const docData = doc.data();
+    const status = docData?.status;
+
+    return {status};
+  });
 
 // -- Images --
 const imageCollectionId = "images";
