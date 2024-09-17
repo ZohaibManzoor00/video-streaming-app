@@ -34,8 +34,21 @@ export async function uploadVideo(file: File) {
     },
   });
 
-  return uploadResult;
+  if (!uploadResult.ok) throw new Error("Failed Upload");
+
+  const fileName = response.data?.fileName?.split(".")[0] || "";
+
+  return { fileName };
 }
+
+// export async function getVideoProcessingStatus(
+//   fileName: any,
+//   collectionId: string
+// ) {
+//   const res = await checkProcessingStatusFunction({ fileName, collectionId });
+//   const video = res.data as Video;
+//   return video?.status;
+// }
 
 export async function getVideos() {
   const res = await getVideosFunction();

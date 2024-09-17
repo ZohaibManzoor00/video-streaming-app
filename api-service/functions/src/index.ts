@@ -59,6 +59,10 @@ export const getVideos = onCall({maxInstances: 1}, async () => {
   return querySnapshot.docs.map((doc) => doc.data());
 });
 
+export const checkVideoStatus = onCall({maxInstances: 1}, async () => {
+  
+})
+
 // -- Images --
 const imageCollectionId = "images";
 
