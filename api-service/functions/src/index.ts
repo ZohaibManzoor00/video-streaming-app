@@ -80,8 +80,9 @@ export const checkVideoStatus = onCall(
 
     const docData = doc.data();
     const status = docData?.status;
+    const progress = docData?.progress;
 
-    return {status};
+    return {status, progress};
   });
 
 // -- Images --

@@ -1,6 +1,6 @@
 "use client";
 
-import { uploadVideo } from "@/app/firebase/videos";
+import { checkVideoStatus, uploadVideo } from "@/app/firebase/videos";
 import { DynamicBorder } from "@/components/dynamic-wrappers";
 import { useState } from "react";
 
@@ -8,6 +8,7 @@ export default function UploadVideo() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [uploadState, setUploadState] = useState<string | undefined>("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
@@ -16,17 +17,51 @@ export default function UploadVideo() {
 
   const handleUpload = async (file: File) => {
     try {
-      const { filename } = await uploadVideo(file)
+      const { filename } = await uploadVideo(file);
       // poll firestore
-      
       alert(
         // TODO: Change from alert to logs
         "File uploaded successfully"
       );
+      await pollVideoStatus(filename);
     } catch (error) {
       alert(`Failed to upload file: ${error}`);
     }
   };
+
+  async function pollVideoStatus(fileName: string): Promise<void> {
+    let pollCount = 0;
+    const MAX_POLL_COUNT = 10;
+
+    const pollFirestore = async (delay = 3000): Promise<void> => {
+      try {
+        pollCount++;
+        const res = await checkVideoStatus(fileName);
+        console.log(res);
+        // if (status === "processed") {
+        //   setProcessing(false);
+        //   setProcessed(true);
+        //   router.refresh();
+        //   return;
+        // }
+
+        // if (pollCount >= MAX_POLL_COUNT) {
+        //   setProcessing(false);
+        //   setProcessed(false);
+        //   alert("Max polling attempts reached.");
+        //   return;
+        // }
+
+        setTimeout(() => pollFirestore(delay * 1.5), delay);
+      } catch (error) {
+        console.error("Error polling video status:", error);
+        setProcessing(false);
+        alert("An error occurred while polling the video processing status.");
+      }
+    };
+
+    await pollFirestore();
+  }
 
   return (
     <DynamicBorder>
