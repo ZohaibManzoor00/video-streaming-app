@@ -1,6 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
+import { Request, Response } from "express";
 
 const storage = new Storage();
 
@@ -155,5 +156,27 @@ function ensureDirectoryExistence(dirPath: string) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true }); // recursive: true enables creating nested directories
     console.log(`Directory created at ${dirPath}`);
+  }
+}
+
+export function readQueueMessage(req: Request, res: Response) {
+  try {
+    const pubSubMessage = req.body.message;
+
+    if (!pubSubMessage || !pubSubMessage.data) {
+      throw new Error("Missing Pub/Sub message or data.");
+    }
+
+    const message = Buffer.from(pubSubMessage.data, "base64").toString("utf8");
+    const data = JSON.parse(message);
+
+    if (!data.name) {
+      throw new Error("Invalid message payload: 'name' field missing.");
+    }
+
+    return data 
+  } catch (error) {
+    console.error(error);
+    return res.status(400).send("Bad Request: missing filename.");
   }
 }
