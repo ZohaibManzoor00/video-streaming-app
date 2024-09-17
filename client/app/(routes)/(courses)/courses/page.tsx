@@ -13,7 +13,7 @@ export default async function CoursesPage() {
     <>
       <div className="flex gap-x-5">
         <UploadVideo />
-        <UploadImage />
+        {/* <UploadImage /> */}
       </div>
 
       <div className="w-1/6 mx-auto">

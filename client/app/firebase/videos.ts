@@ -10,7 +10,13 @@ type Video = {
   id?: string;
   uid?: string;
   filename?: string;
-  status?: "processing" | "processed";
+  status?: "processing" | "processed" | "failed";
+  progress?:
+    | "initializing"
+    | "downloading"
+    | "processing"
+    | "uploading"
+    | "complete";
 };
 
 export async function uploadVideo(file: File) {

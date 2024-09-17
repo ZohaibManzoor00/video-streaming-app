@@ -17,6 +17,7 @@ export default function UploadVideo() {
   const handleUpload = async (file: File) => {
     try {
       const response = await uploadVideo(file)
+      console.log(response)
       alert(
         // TODO: Change from alert to logs
         "File uploaded successfully"

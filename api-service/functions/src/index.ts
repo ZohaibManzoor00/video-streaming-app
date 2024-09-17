@@ -55,7 +55,6 @@ const videoCollectionId = "videos";
 export const getVideos = onCall({maxInstances: 1}, async () => {
   const querySnapshot = await firestore
     .collection(videoCollectionId)
-    .where("status", "==", "processed")
     .get();
   return querySnapshot.docs.map((doc) => doc.data());
 });
@@ -66,7 +65,6 @@ const imageCollectionId = "images";
 export const getImages = onCall({maxInstances: 1}, async () => {
   const querySnapshot = await firestore
     .collection(imageCollectionId)
-    .where("status", "==", "processed")
     .get();
   return querySnapshot.docs.map((doc) => doc.data());
 });

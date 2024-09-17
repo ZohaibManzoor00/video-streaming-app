@@ -20,6 +20,7 @@ type Video = {
     | "uploading"
     | "complete";
 };
+
 type Status = Video["status"];
 type Progress = Video["progress"];
 
@@ -50,7 +51,7 @@ export const updateVideo = async (
   videoId: string,
   status: Status,
   progress: Progress,
-  filename: null | string = null
+  filename: null | string = null,
 ) => {
   const updateData: Partial<Video> = { status, progress };
   if (filename) updateData.filename = filename;
