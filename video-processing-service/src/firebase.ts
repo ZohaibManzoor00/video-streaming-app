@@ -43,8 +43,8 @@ export const setVideo = async (
 };
 
 export const isVideoNew = async (videoId: string): Promise<boolean> => {
-  const video = await getVideo(videoId);
-  return video?.status === undefined;
+  const snapshot = await firestore.collection(videoCollectionId).doc(videoId).get();
+  return !snapshot.exists;
 };
 
 export const updateVideo = async (
@@ -62,7 +62,7 @@ export const handleVideoProgress = async (
   videoId: string,
   status: Status,
   progress: Progress,
-  filename: string | null = null
+  filename?: string
 ) => {
   try {
     await updateVideo(videoId, status, progress, filename);
@@ -78,10 +78,10 @@ export const handleError = async (
   message: string,
   inputFileName: string,
   outputFileName: string
-) => {
+): Promise<Response> => {
   console.error(message);
   await updateVideo(videoId, "failed", "complete", outputFileName);
-  Promise.all([
+  await Promise.all([
     deleteRawVideo(inputFileName),
     deleteProcessedVideo(outputFileName),
   ]).catch((err) => console.error(`Error deleting local video files: ${err}`));
