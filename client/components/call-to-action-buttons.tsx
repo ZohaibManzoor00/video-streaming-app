@@ -1,4 +1,3 @@
-import { DynamicButton } from "@/components/dynamic-wrappers";
 import { cn } from "@/lib/utils";
 
 type CallToActionButtonsProps = {
@@ -10,15 +9,12 @@ export default function CallToActionButtons({
 }: CallToActionButtonsProps) {
   return (
     <div className={cn("flex gap-x-6 w-full justify-center", priorityStyles)}>
-      <DynamicButton styles={"min-w-56 rounded-full py-3 px-6 text-slate-200"}>
+      <button className={"min-w-56 rounded-full py-3 px-6 text-slate-200"}>
         Browse Courses
-      </DynamicButton>
-      <DynamicButton
-        styles={"min-w-56 rounded-full py-3 px-6 text-lg"}
-        buttonType="cta"
-      >
+      </button>
+      <button className={"min-w-56 rounded-full py-3 px-6 text-lg"}>
         View Learning Paths
-      </DynamicButton>
+      </button>
     </div>
   );
 }

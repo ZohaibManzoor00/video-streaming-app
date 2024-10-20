@@ -1,7 +1,6 @@
 "use client";
 
-import { checkVideoStatus, uploadVideo } from "@/app/firebase/videos";
-import { DynamicBorder } from "@/components/dynamic-wrappers";
+import { checkVideoStatus, uploadVideo } from "@/firebase/videos";
 import { useState } from "react";
 
 type Video = {
@@ -76,7 +75,6 @@ export default function UploadVideo() {
           Uploading Status: {uploadState} Progress: {progress && progress}
         </p>
       ) : (
-        <DynamicBorder>
           <label className="flex gap-x-2 cursor-pointer p-1">
             <p className="text-slate-200">Video</p>
             <svg
@@ -100,7 +98,6 @@ export default function UploadVideo() {
               onChange={handleFileChange}
             />
           </label>
-        </DynamicBorder>
       )}
     </>
   );

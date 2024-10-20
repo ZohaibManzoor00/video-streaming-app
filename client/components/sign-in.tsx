@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut, signInWithGoogle } from "@/app/firebase/firebase";
+import { signOut, signInWithGoogle } from "@/firebase/firebase";
 import { useState } from "react";
 import { useAuthContext } from "@/context/authContext";
 import Image from "next/image";

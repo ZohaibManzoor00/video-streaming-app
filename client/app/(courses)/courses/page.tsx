@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import UploadVideo from "../_components/upload-video";
 import UploadImage from "../_components/upload-image";
-import { getImages } from "@/app/firebase/images";
-import { getVideos } from "@/app/firebase/videos";
+import { getImages } from "@/firebase/images";
+import { getVideos } from "@/firebase/videos";
 import VideosList from "../_components/video-list";
 
 export default async function CoursesPage() {

@@ -2,19 +2,16 @@ import express, { Request, Response } from "express";
 import {
   uploadProcessedVideo,
   downloadRawVideo,
-  deleteRawVideo,
-  deleteProcessedVideo,
+  deleteLocalRawVideo,
+  deleteLocalProcessedVideo,
   convertVideo,
   setupDirectories,
   readQueueMessage,
+  handleError,
+  deleteLocalVideoFiles,
 } from "./storage";
 
-import {
-  handleError,
-  isVideoNew,
-  handleVideoProgress,
-  setVideo,
-} from "./firebase";
+import { isVideoNew, setVideo } from "./firebase";
 
 // Create the local directories for processing locally
 setupDirectories();
@@ -25,20 +22,26 @@ app.use(express.json());
 // Endpoint invoked by pub/sub message when raw video is uploaded Cloud Storage Bucket
 app.post("/process-video", async (req: Request, res: Response) => {
   // Get filename from pub/sub message
-  const data = await readQueueMessage(req, res);
-  if (!data) return res.status(200).send("Bad Request");
-
-  const inputFileName = data.name; // <UID>-<DATE>.<EXTENSION>
-  const outputFileName = `processed-${inputFileName}`;
-  const videoId = inputFileName.split(".")[0];
-
-  // Idempotent - safe for pub/sub to repeat same request w/o side effects
-  if (!(await isVideoNew(videoId))) {
-    return res
-      .status(400)
-      .send("Bad Request: video already processing or processed.");
+  let filename;
+  try {
+    filename = readQueueMessage(req);
+  } catch (err) {
+    console.log("Bad Request: Missing filename " + err);
+    return res.sendStatus(400);
   }
 
+  // <UID>-<DATE>.<EXTENSION> | <FILENAME>.<EXTENSION>
+  const inputFileName = filename;
+  const videoId = inputFileName.split(".")[0];
+  const outputFolderName = videoId;
+
+  console.log("Checking if video is new...");
+  if (!(await isVideoNew(videoId))) {
+    console.log("Video is already processing or processed");
+    return res.sendStatus(200);
+  }
+
+  console.log("Writing metadata to firestore...");
   await setVideo(videoId, {
     id: videoId,
     uid: videoId.split("-")[0],
@@ -46,58 +49,104 @@ app.post("/process-video", async (req: Request, res: Response) => {
     progress: "initializing",
   });
 
-  // Download raw video from Cloud Storage
+  console.log("Downloading 'raw' video into local directory...");
   try {
-    await handleVideoProgress(videoId, "processing", "downloading");
     await downloadRawVideo(inputFileName);
-  } catch (err) {
-    return handleError(
-      res,
-      videoId,
-      "Download failed",
-      inputFileName,
-      outputFileName
-    );
+  } catch (err: any) {
+    await setVideo(videoId, {
+      status: "failed",
+      progress: "complete",
+    });
+    await deleteLocalRawVideo(inputFileName);
+    console.log(`Downloading failed: ${err.message}`);
+    return res.sendStatus(500);
   }
 
-  // Process video into 1080p
+  console.log("Starting Transcoding...");
   try {
-    await handleVideoProgress(videoId, "processing", "processing");
-    await convertVideo(inputFileName, outputFileName);
-  } catch (err) {
-    return handleError(
-      res,
-      videoId,
-      "Processing failed",
-      inputFileName,
-      outputFileName
-    );
+    await convertVideo(inputFileName, outputFolderName);
+  } catch (err: any) {
+    await setVideo(videoId, {
+      status: "failed",
+      progress: "complete",
+    });
+    await deleteLocalVideoFiles(inputFileName, outputFolderName);
+    console.log(`Transcoding failed: ${err.message}`);
+    return res.sendStatus(500);
   }
 
-  // Upload processed video to Cloud Storage
+  console.log("Uploading processed video...");
   try {
-    await handleVideoProgress(videoId, "processing", "uploading");
-    await uploadProcessedVideo(outputFileName);
-  } catch (err) {
-    return handleError(
-      res,
-      videoId,
-      "Upload failed",
-      inputFileName,
-      outputFileName
-    );
+    await uploadProcessedVideo(outputFolderName);
+  } catch (err: any) {
+    await setVideo(videoId, {
+      status: "failed",
+      progress: "complete",
+    });
+    await deleteLocalVideoFiles(inputFileName, outputFolderName);
+    console.log(`Failed to upload: ${err.message}`);
+    return res.sendStatus(500);
   }
 
-  // Change processing status in firestore
-  await handleVideoProgress(videoId, "processed", "complete", outputFileName);
+  await setVideo(videoId, {
+    status: "processed",
+    progress: "complete",
+  });
 
+  await deleteLocalVideoFiles(inputFileName, outputFolderName);
+  console.log("Video transcoding successfully completed");
+  res.sendStatus(200);
+  // const processedBucket = "marcy-yt-processed-videos";
+  // await deleteLocalVideoFiles(inputFileName, outputFolderName);
+
+  // await setVideo(videoId, {
+  //   id: videoId,
+  //   uid: videoId.split("-")[0],
+  //   status: "processed",
+  //   progress: "complete",
+  //   mpd_url: `https://storage.googleapis.com/${processedBucket}/${outputFolderName}/manifest.mpd`,
+  // });
+
+  // return res.sendStatus(200).send("Video processing finished successfully");
+
+  // "mpd_url": `https://storage.googleapis.com/${processedVideoBucketName}/${processedVideoFolder}/output.mpd`,
+
+  // console.log("Uploading...")
+  // // Upload processed video to Cloud Storage
+  // try {
+  //   // await handleVideoProgress(videoId, "processing", "uploading");
+  //   await uploadProcessedVideo(outputFolderName);
+  // } catch (err) {
+  //   return handleError(
+  //     res,
+  //     err,
+  //     videoId,
+  //     "Upload failed",
+  //     inputFileName,
+  //     outputFolderName
+  //   );
+  // }
+
+  // console.log("Updating Metadata...")
+  // // Change processing status in firestore
+  // // await handleVideoProgress(videoId, "processed", "complete", outputFileName);
+  // await setVideo(videoId, {
+  //   id: videoId,
+  //   uid: videoId.split("-")[0],
+  //   status: "processed",
+  //   progress: "complete",
+  // });
+
+  // console.log("Deleting local temp files")
   // Delete local temp files
-  await Promise.all([
-    deleteRawVideo(inputFileName),
-    deleteProcessedVideo(outputFileName),
-  ]);
+  // await Promise.all([
+  //   deleteLocalRawVideo(inputFileName),
+  //   deleteLocalProcessedVideo(outputFolderName),
+  // ]);
 
-  return res.status(200).send("Video processing finished successfully");
+  // await deleteLocalVideoFiles(inputFileName, outputFolderName)
+
+  // return res.status(200).send("Video processing finished successfully");
 });
 
 const port = process.env.PORT || 3000;

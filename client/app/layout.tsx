@@ -1,5 +1,4 @@
 import { AuthProvider } from "@/context/authContext";
-import { ThemeProvider } from "@/context/themeContext";
 import { Roboto } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -21,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={roboto.className}>
         <AuthProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          {children}
         </AuthProvider>
       </body>
     </html>

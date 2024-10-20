@@ -1,6 +1,6 @@
 "use client";
 
-import { uploadImage } from "@/app/firebase/images";
+import { uploadImage } from "@/firebase/images";
 
 export default function UploadImage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
