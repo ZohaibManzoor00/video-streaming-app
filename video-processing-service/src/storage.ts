@@ -211,10 +211,11 @@ export function convertVideo(
       "scale=1920:1080",
     ];
 
-    const videoBitrates = ["500k", "1000k", "2000k", "4000k"];
+    // Updated bitrates for higher quality
+    const videoBitrates = ["1500k", "2500k", "5000k", "8000k"];
 
     const videoCodec = "libx264";
-    const x264Options = "keyint=24:min-keyint=24";
+    const x264Options = "keyint=48:min-keyint=48"; // More frequent keyframes for better quality
 
     // Clean up previous output files if they exist
     fs.readdirSync(outputFolder).forEach(file => {
@@ -225,7 +226,9 @@ export function convertVideo(
     const ffmpegProcess = ffmpeg(inputVideoPath)
       .videoCodec(videoCodec)
       .addOption("-x264opts", x264Options)
-      .addOption("-preset", "veryfast")  // Faster encoding for short videos
+      .addOption("-preset", "slow")  // Slower encoding for better quality
+      .addOption("-crf", "18")  // Lower CRF for higher quality
+      .addOption("-g", "48")  // Set GOP size for more frequent keyframes
       .addOption("-loglevel", "debug");  // Detailed logging for debugging
 
     // Add output streams for each resolution and bitrate
@@ -264,6 +267,7 @@ export function convertVideo(
       .run();  // Execute the FFmpeg process
   });
 }
+
 
 /**
  * @param fileName - The name of the file to download from the

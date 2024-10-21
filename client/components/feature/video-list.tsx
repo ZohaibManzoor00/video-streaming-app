@@ -25,10 +25,10 @@ export default function VideosList({ videos }: VideosListProps) {
     <ul className="flex flex-col gap-y-4">
       {videos.map((video) => (
         <li key={video.id}>
-            <Link href={`/watch?v=${video.filename}`}>
-              <button className="py-4 text-lg">Watch Video!</button>
+            <Link href={`/watch?v=${video.id}`}>
+              <button className="py-4 text-lg">Watch Video: {video.id}</button>
             </Link>
-            <button onClick={handleDelete}>Delete</button>
+            {/* <button onClick={handleDelete}>Delete</button> */}
         </li>
       ))}
     </ul>
