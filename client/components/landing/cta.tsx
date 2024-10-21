@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Icons } from "@/components/icons";
+import { Icons } from "@/components/landing/icons";
 import Section from "@/components/section";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "./ui/Button";
+import { buttonVariants } from "../ui/Button";
 
 export default function CTA() {
   return (

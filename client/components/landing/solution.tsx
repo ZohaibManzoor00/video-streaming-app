@@ -3,9 +3,10 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Section from "@/components/section";
-import Safari from "./safari";
-import FlickeringGrid from "./magicui/flickering-grid";
-import Ripple from "./magicui/ripple";
+import Safari from "../safari";
+import FlickeringGrid from "../magicui/flickering-grid";
+import Ripple from "../magicui/ripple";
+
 
 const features = [
   {

@@ -1,14 +1,12 @@
-import Image from "next/image";
-import Hero from "@/components/magicui/hero";
+import Hero from "@/components/landing/hero";
 import Particles from "@/components/magicui/particles";
-import Logos from "@/components/logos";
-import Problem from "@/components/problem";
-import Solution from "@/components/solution";
-import HowItWorks from "@/components/how-it-works";
-import FeaturesLanding from "@/components/features";
-import CTA from "@/components/cta";
-import { OrbitingCirclesLanding } from "@/components/orbiting-landing";
-import TechStackLanding from "@/components/tech-stack-landing";
+import CTA from "@/components/landing/cta";
+import Logos from "@/components/landing/logos";
+import HowItWorks from "@/components/landing/how-it-works";
+import TechStackLanding from "@/components/landing/tech-stack-landing";
+import Problem from "@/components/landing/problem";
+import Solution from "@/components/landing/solution";
+import FeaturesLanding from "@/components/landing/features";
 
 export default function Home() {
   return (

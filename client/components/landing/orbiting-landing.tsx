@@ -1,4 +1,4 @@
-import { OrbitingCircles } from "./magicui/orbiting-circles";
+import { OrbitingCircles } from "../magicui/orbiting-circles";
 
 export function OrbitingCirclesLanding() {
   return (

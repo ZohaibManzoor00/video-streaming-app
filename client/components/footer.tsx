@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Icons } from "./icons";
+import { Icons } from "./landing/icons";
 import { ChevronRight } from "lucide-react";
 import { siteConfig } from "@/lib/siteConfig";
 

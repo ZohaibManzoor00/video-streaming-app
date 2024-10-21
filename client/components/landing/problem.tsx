@@ -1,7 +1,7 @@
-import Section from "./section";
-import BlurFade from "./magicui/blur-fade";
-import { Card, CardContent } from "./ui/card";
 import { Brain, Shield, Zap } from "lucide-react";
+import Section from "../section";
+import BlurFade from "../magicui/blur-fade";
+import { Card, CardContent } from "../ui/card";
 
 const problems = [
   {

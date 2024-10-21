@@ -4,13 +4,12 @@ import { BorderBeam } from "@/components/magicui/border-beam";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Button } from "../ui/Button";
-import TextShimmer from "./text-shimmer";
+import TextShimmer from "../magicui/text-shimmer";
 import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
-import VideoDialog from "./video-dialog";
-import ShinyButton from "./shiny-button";
-import { RainbowButton } from "./rainbow-button";
+import VideoDialog from "../magicui/video-dialog";
 
 const ease = [0.16, 1, 0.3, 1];
+
 
 function HeroImage() {
   return (
@@ -42,42 +41,34 @@ function HeroImage() {
 export default function HeroSection() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+
   return (
     <section
       id="hero"
-      className="relative mx-auto mt-32 max-w-[80rem] px-6 text-center md:px-8"
-    >
-      <div className="backdrop-filter-[12px] inline-flex h-7 items-center justify-between rounded-full border border-white/5 bg-white/10 px-3 text-xs text-white dark:text-black transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in opacity-0">
+      className="relative mx-auto mt-32 max-w-[80rem] px-6 text-center md:px-8">
+      <div
+        className="backdrop-filter-[12px] inline-flex h-7 items-center justify-between rounded-full border border-white/5 dark:bg-white/10 bg-black/5 px-3 text-xs text-white dark:text-black transition-all ease-in hover:cursor-pointer dark:hover:bg-white/20 hover:bg-black/10 group gap-1 translate-y-[-1rem] animate-fade-in opacity-0">
         <TextShimmer className="inline-flex items-center justify-center">
-          <span>✨ Introducing Magic UI Template</span>{" "}
+          <span>🚀 See the Tech Behind This Build</span>{" "}
           <ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
         </TextShimmer>
       </div>
       <h1 className="bg-gradient-to-br dark:from-white from-black from-30% dark:to-white/40 to-black/40 bg-clip-text py-6 text-5xl font-medium leading-none tracking-tighter text-transparent text-balance sm:text-6xl md:text-7xl lg:text-8xl translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms]">
         Introducing a new way
-        <br className="hidden md:block" />
+        <br className="block" />
         to store your videos.
       </h1>
       <p className="mb-12 text-lg tracking-tight text-gray-400 md:text-xl text-balance translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms]">
-        Experience seamless video uploading, viewing, and tracking with a
-        scalable architecture built on
-        <br className="hidden md:block" /> Typescript, Next.js, Message Queues,
-        and Serverless technologies.
+        Easily upload, track status, and watch your videos on a modern stack built on
+        <br className="hidden md:block" />
+        Typescript, Next.js, Message Queues, and Serverless technologies.
       </p>
-      <ShinyButton className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg text-white dark:text-black opacity-0 ease-in-out [--animation-delay:600ms]">
-        {/* <Button className="translate-y-[-1rem] animate-fade-in gap-1 rounded-lg text-white dark:text-black opacity-0 ease-in-out [--animation-delay:600ms]"> */}
-
-        {/* <div className="flex"> */}
-        {/* <p>Get Started</p>{" "} */}
-        {/* <ArrowRightIcon className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" /> */}
-        {/* </div> */}
+      <Button size="sm" className="px-6 dark:border-white dark:bg-white dark:hover:bg-white/85 hover:bg-black/85 border-black bg-black translate-y-[-1rem] animate-fade-in gap-1 rounded-lg text-white dark:text-black opacity-0 ease-in-out [--animation-delay:600ms]">
         <span className="group inline-flex items-center">
-          Get Started{" "}
-          <ChevronRightIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
+          Get Started for free
+          <ArrowRightIcon className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
         </span>
-        {/* </Button> */}
-      </ShinyButton>
-
+      </Button>
       <div
         ref={ref}
         className="relative mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms] [perspective:2000px] after:absolute after:inset-0 after:z-50 after:[background:linear-gradient(to_top,hsl(var(--background))_30%,transparent)]"
