@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlignJustify, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { buttonVariants } from "./ui/Button";
+import { buttonVariants } from "./ui/button";
 
 const menuItem = [
   {

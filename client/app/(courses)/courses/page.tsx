@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import UploadVideo from "../_components/upload-video";
-import UploadImage from "../_components/upload-image";
+import UploadVideo from "../../../components/feature/upload-video";
+import UploadImage from "../../../components/feature/upload-image";
 import { getImages } from "@/firebase/images";
 import { getVideos } from "@/firebase/videos";
-import VideosList from "../_components/video-list";
+import VideosList from "../../../components/feature/video-list";
 
 export default async function CoursesPage() {
   const [videos, images] = await Promise.all([getVideos(), getImages()]);

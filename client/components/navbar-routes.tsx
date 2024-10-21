@@ -2,7 +2,6 @@ import Link from "next/link";
 import SignInOut from "./sign-in";
 import NavRoutes from "./nav-routes";
 import NavSecondaryColorBar from "./random-color-bar";
-import ThemeSelector from "./theme-selector";
 import { SearchIcon } from "lucide-react";
 
 export default function NavbarRoutes() {
@@ -17,7 +16,6 @@ export default function NavbarRoutes() {
         </div>
         <div className="flex gap-x-2 items-center ml-auto">
           <SearchIcon className="mr-2" />
-          <ThemeSelector />
           <SignInOut />
         </div>
       </div>

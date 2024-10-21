@@ -3,7 +3,7 @@
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import TextShimmer from "../magicui/text-shimmer";
 import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
 import VideoDialog from "../magicui/video-dialog";
@@ -45,7 +45,7 @@ export default function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative mx-auto mt-32 max-w-[80rem] px-6 text-center md:px-8">
+      className="relative mx-auto max-w-[80rem] px-6 text-center md:px-8">
       <div
         className="backdrop-filter-[12px] inline-flex h-7 items-center justify-between rounded-full border border-white/5 dark:bg-white/10 bg-black/5 px-3 text-xs text-white dark:text-black transition-all ease-in hover:cursor-pointer dark:hover:bg-white/20 hover:bg-black/10 group gap-1 translate-y-[-1rem] animate-fade-in opacity-0">
         <TextShimmer className="inline-flex items-center justify-center">

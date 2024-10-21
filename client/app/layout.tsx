@@ -47,7 +47,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <SiteHeader />
-            <main className="mx-auto flex-1 overflow-hidden">{children}</main>
+            <main className="mx-auto flex-1 overflow-hidden mt-32">{children}</main>
             <Footer />
           </AuthProvider>
           <ThemeToggle />

@@ -132,6 +132,65 @@ export function setupDirectories() {
 //       .run();
 //   });
 // }
+// export function convertVideo(
+//   rawVideoName: string,
+//   processedVideoFolder: string
+// ) {
+//   return new Promise<void>((resolve, reject) => {
+//     // Define paths
+//     const outputFolder = `${localProcessedPath}/${processedVideoFolder}`;
+//     const inputVideoPath = `${localRawPath}/${rawVideoName}`;
+    
+//     // Ensure output folder exists
+//     ensureDirectoryExistence(outputFolder);
+
+//     // Video resolution and bitrate options
+//     const scaleOptions = [
+//       "scale=640:320",
+//       "scale=854:480",
+//       "scale=1280:720",
+//       "scale=1920:1080",
+//     ];
+
+//     const videoBitrates = ["500k", "1000k", "2000k", "4000k"];
+
+//     const videoCodec = "libx264";
+//     const x264Options = "keyint=24:min-keyint=24";
+
+//     // Initialize FFmpeg process
+//     const ffmpegProcess = ffmpeg(inputVideoPath)
+//       .videoCodec(videoCodec)
+//       .addOption("-x264opts", x264Options)
+//       .format("dash")  // DASH streaming format
+//       .addOption("-loglevel", "verbose")  // Add detailed logging for debugging
+
+//     // Add output streams for each resolution and bitrate
+//     scaleOptions.forEach((scale, index) => {
+//       ffmpegProcess
+//         .output(`${outputFolder}/video_${index}.mp4`)  // Output files for each resolution
+//         .videoFilters(scale)  // Apply scaling filter
+//         .outputOptions("-b:v", videoBitrates[index]);  // Set corresponding bitrate
+//     });
+
+//     // Generate DASH manifest
+//     ffmpegProcess
+//       .output(`${outputFolder}/manifest.mpd`)  // Output the DASH manifest file
+//       .addOption("-map", "0:v")  // Map only the video stream, ignoring audio issues
+//       .on("start", () => console.log("Starting FFmpeg transcoding..."))  // Start log
+//       .on("progress", (progress) => {
+//         console.log(`FFmpeg processing: ${progress.percent?.toFixed(2)}% done`);
+//       })
+//       .on("end", () => {
+//         console.log("FFmpeg transcoding finished successfully");
+//         resolve();
+//       })
+//       .on("error", (err: any) => {
+//         console.log("An error occurred during transcoding: " + err.message);
+//         reject(err);
+//       })
+//       .run();  // Execute the FFmpeg process
+//   });
+// }
 export function convertVideo(
   rawVideoName: string,
   processedVideoFolder: string
@@ -157,25 +216,39 @@ export function convertVideo(
     const videoCodec = "libx264";
     const x264Options = "keyint=24:min-keyint=24";
 
+    // Clean up previous output files if they exist
+    fs.readdirSync(outputFolder).forEach(file => {
+      fs.unlinkSync(`${outputFolder}/${file}`);
+    });
+
     // Initialize FFmpeg process
     const ffmpegProcess = ffmpeg(inputVideoPath)
       .videoCodec(videoCodec)
       .addOption("-x264opts", x264Options)
-      .format("dash")  // DASH streaming format
-      .addOption("-loglevel", "verbose")  // Add detailed logging for debugging
+      .addOption("-preset", "veryfast")  // Faster encoding for short videos
+      .addOption("-loglevel", "debug");  // Detailed logging for debugging
 
     // Add output streams for each resolution and bitrate
     scaleOptions.forEach((scale, index) => {
       ffmpegProcess
         .output(`${outputFolder}/video_${index}.mp4`)  // Output files for each resolution
         .videoFilters(scale)  // Apply scaling filter
-        .outputOptions("-b:v", videoBitrates[index]);  // Set corresponding bitrate
+        .outputOptions("-b:v", videoBitrates[index])  // Set corresponding bitrate
+        .outputOptions("-maxrate", videoBitrates[index])
+        .outputOptions("-bufsize", `${parseInt(videoBitrates[index], 10) * 2}k`);
     });
 
     // Generate DASH manifest
     ffmpegProcess
       .output(`${outputFolder}/manifest.mpd`)  // Output the DASH manifest file
-      .addOption("-map", "0:v")  // Map only the video stream, ignoring audio issues
+      .format('dash')  // Explicitly set output format for the manifest
+      .addOption("-f", "dash")
+      .addOption("-use_template", "1")  // Enable template-based segment naming
+      .addOption("-use_timeline", "1")  // Enable timeline-based segmenting
+      .addOption("-seg_duration", "4")  // Segment duration in seconds
+      .addOption("-max_muxing_queue_size", "1024")  // Prevent buffer errors
+      .addOption("-map", "0:v")  // Map all video streams
+      .addOption("-map", "0:a?")  // Optionally map audio if present
       .on("start", () => console.log("Starting FFmpeg transcoding..."))  // Start log
       .on("progress", (progress) => {
         console.log(`FFmpeg processing: ${progress.percent?.toFixed(2)}% done`);

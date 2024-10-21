@@ -13,7 +13,7 @@ import {
 
 import { isVideoNew, setVideo } from "./firebase";
 
-// Create the local directories for processing locally
+// Create directories for local processing
 setupDirectories();
 
 const app = express();

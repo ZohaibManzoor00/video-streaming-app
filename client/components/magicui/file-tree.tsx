@@ -12,7 +12,7 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { FileIcon, FolderIcon, FolderOpenIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 
 
