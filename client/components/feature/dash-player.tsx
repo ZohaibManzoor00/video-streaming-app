@@ -12,7 +12,6 @@ const DashPlayer: React.FC<DashPlayerProps> = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoSrc = useSearchParams().get("v");
 
-  if (!videoSrc) return <div>Not Found</div>;
 
   const url = `https://storage.googleapis.com/marcy-yt-processed-videos/${videoSrc}/manifest.mpd`;
 
@@ -60,6 +59,8 @@ const DashPlayer: React.FC<DashPlayerProps> = () => {
       };
     }
   }, [url]);
+  
+  if (!videoSrc) return <div>Not Found</div>;
 
   return (
     <div>
