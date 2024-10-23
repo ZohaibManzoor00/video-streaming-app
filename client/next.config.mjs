@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
+import path from 'path'
+
 const nextConfig = {
+  staticPageGenerationTimeout: 120,
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.resolve('./');
+    return config;
+  },
   images: {
     remotePatterns: [
       {
@@ -16,5 +23,6 @@ const nextConfig = {
     ],
   },
 };
+
 
 export default nextConfig;

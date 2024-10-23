@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icons } from "@/components/landing/icons";
 import Section from "@/components/section";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "../ui/Button";
+import { buttonVariants } from "../ui/button";
 
 export default function CTA() {
   return (

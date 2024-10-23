@@ -3,10 +3,11 @@
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import TextShimmer from "../magicui/text-shimmer";
 import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
 import VideoDialog from "../magicui/video-dialog";
+import Link from "next/link";
 
 const ease = [0.16, 1, 0.3, 1];
 
@@ -45,7 +46,7 @@ export default function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative mx-auto mt-32 max-w-[80rem] px-6 text-center md:px-8">
+      className="relative mx-auto max-w-[80rem] px-6 text-center md:px-8">
       <div
         className="backdrop-filter-[12px] inline-flex h-7 items-center justify-between rounded-full border border-white/5 dark:bg-white/10 bg-black/5 px-3 text-xs text-white dark:text-black transition-all ease-in hover:cursor-pointer dark:hover:bg-white/20 hover:bg-black/10 group gap-1 translate-y-[-1rem] animate-fade-in opacity-0">
         <TextShimmer className="inline-flex items-center justify-center">
@@ -63,12 +64,14 @@ export default function HeroSection() {
         <br className="hidden md:block" />
         Typescript, Next.js, Message Queues, and Serverless technologies.
       </p>
+      <Link href="/feature">
       <Button size="sm" className="px-6 dark:border-white dark:bg-white dark:hover:bg-white/85 hover:bg-black/85 border-black bg-black translate-y-[-1rem] animate-fade-in gap-1 rounded-lg text-white dark:text-black opacity-0 ease-in-out [--animation-delay:600ms]">
         <span className="group inline-flex items-center">
           Get Started for free
           <ArrowRightIcon className="ml-1 size-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
         </span>
       </Button>
+      </Link>
       <div
         ref={ref}
         className="relative mt-[8rem] animate-fade-up opacity-0 [--animation-delay:400ms] [perspective:2000px] after:absolute after:inset-0 after:z-50 after:[background:linear-gradient(to_top,hsl(var(--background))_30%,transparent)]"
