@@ -3,25 +3,31 @@ import { initializeApp } from "firebase-admin/app";
 import { Firestore } from "firebase-admin/firestore";
 
 initializeApp({ credential: credential.applicationDefault() });
-const firestore = new Firestore();
+export const firestore = new Firestore();
 const videoCollectionId = "videos";
 
 type Video = {
   id?: string;
   uid?: string;
   filename?: string;
-  status?: "processing" | "processed" | "failed";
-  progress?:
-    | "initializing"
-    | "downloading"
-    | "processing"
-    | "uploading"
-    | "complete";
+  status?: VideoStatus;
+  progress?: VideoProgress
   mpd_url?: string;
 };
 
-type Status = Video["status"];
-type Progress = Video["progress"];
+export enum VideoStatus {
+  Processing = 'processing',
+  Processed = 'processed',
+  Failed = 'failed',
+}
+
+export enum VideoProgress {
+  Initializing = 'initializing',
+  Downloading = 'downloading',
+  Transcoding = 'transcoding',
+  Uploading = 'uploading',
+  Complete = 'complete',
+}
 
 export const getVideo = async (videoId: string): Promise<Video> => {
   const snapshot = await firestore
@@ -33,12 +39,13 @@ export const getVideo = async (videoId: string): Promise<Video> => {
 
 export const setVideo = async (
   videoId: string,
-  video: Video
+  videoData: Video,
+  transaction?: FirebaseFirestore.Transaction
 ): Promise<void> => {
-  await firestore
-    .collection(videoCollectionId)
-    .doc(videoId)
-    .set(video, { merge: true });
+  const videoRef = firestore.collection(videoCollectionId).doc(videoId);
+
+  if (transaction) transaction.set(videoRef, videoData, { merge: true });
+  else await videoRef.set(videoData, { merge: true });
 };
 
 export const isVideoNew = async (videoId: string): Promise<boolean> => {
@@ -50,8 +57,8 @@ export const isVideoNew = async (videoId: string): Promise<boolean> => {
 
 export const updateVideo = async (
   videoId: string,
-  status: Status,
-  progress: Progress,
+  status: VideoStatus,
+  progress: VideoProgress,
   filename: null | string = null,
 ) => {
   const updateData: Partial<Video> = { status, progress };
