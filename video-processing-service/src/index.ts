@@ -26,7 +26,7 @@ app.post("/process-video", async (req: Request, res: Response) => {
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Error reading queue message.';
     console.error("Bad Request: Missing filename. Error:", errorMessage);
-    return handleError(res, err, null, "Reading queue message failed", null, null);
+    return handleError(res, err, null, "Error Reading queue message", null, null);
   }
 
   // <UID>-<DATE>.<EXTENSION> | <FILENAME>.<EXTENSION>
