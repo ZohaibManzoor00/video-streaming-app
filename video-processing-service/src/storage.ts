@@ -16,11 +16,11 @@ const storage = new Storage();
 const rawBucket = "marcy-yt-raw-videos";
 const processedBucket = "marcy-yt-processed-videos";
 
-const localRawPath = "./raw-videos";
-const localProcessedPath = "./processed-videos";
+export const localRawPath = "./raw-videos";
+export const localProcessedPath = "./processed-videos";
 
 /**
- * Creates the local directories for raw and processed videos.
+ * Initializes local directories for raw and processed videos.
  */
 export function setupDirectories() {
   ensureDirectoryExistence(localRawPath);
@@ -31,75 +31,6 @@ export function setupDirectories() {
  * @param {string} videoId - The unique identifier for the video document in Firestore.
  * @param {string} uid - The user ID associated with the video upload.
  * @returns {Promise<void>} A promise that resolves when the video processing initialization completes.
- * @throws Will throw an error if the video is already being processed or has exceeded the retry limit.
- */
-// export async function initializeVideoProcessing(
-//   videoId: string,
-//   uid: string
-// ): Promise<void> {
-//   const videoRef = firestore.collection("videos").doc(videoId);
-//   const maxRetries = 5
-
-//   await firestore.runTransaction(async (transaction) => {
-//     const videoDoc = await transaction.get(videoRef);
-
-//     if (!videoDoc.exists) {
-//       await setVideo(
-//         videoId,
-//         {
-//           id: videoId,
-//           uid: uid,
-//           status: VideoStatus.Processing,
-//           progress: VideoProgress.Initializing,
-//           retryCount: 0
-//         },
-//         transaction
-//       );
-//     }
-
-//     const { status, retryCount = 0 } = videoDoc.data() ?? {};
-
-//     if (status === VideoStatus.Processing || status === VideoStatus.Processed) {
-//       throw new Error("Video is already being processed or has been completed.");
-//     }
-
-//     if (status === VideoStatus.Failed && retryCount >= maxRetries) {
-//       await setVideo(videoId, { status: VideoStatus.PermanentlyFailed, progress: VideoProgress.Complete }, transaction);
-//       throw new Error("Video has reached the maximum number of retries.");
-//     }
-
-//     const newRetryCount = status === VideoStatus.Failed ? retryCount + 1 : retryCount;
-
-//     await setVideo(
-//       videoId,
-//       {
-//         id: videoId,
-//         uid: uid,
-//         status: VideoStatus.Processing,
-//         progress: VideoProgress.Initializing,
-//         retryCount: newRetryCount
-//       },
-//       transaction
-//     );
-//   });
-// }
-
-// await setVideo(
-//   videoId,
-//   {
-//     id: videoId,
-//     uid: uid,
-//     status: VideoStatus.Processing,
-//     progress: VideoProgress.Initializing,
-//     retryCount: 0
-//   },
-//   transaction
-// );
-
-/**
- * @param videoId - The unique identifier for the video document in Firestore.
- * @param uid - The user ID associated with the video upload.
- * @returns A promise that resolves when the video processing initialization completes.
  * @throws Will throw an error if the video is already being processed or has exceeded the retry limit.
  */
 export async function initializeVideoProcessing(
@@ -292,24 +223,10 @@ export async function uploadProcessedVideo(processedVideoFolder: string) {
 
   try {
     const files = await fs.promises.readdir(folderPath);
+    await Promise.all(files.map(async (file) => await bucket.upload(`${folderPath}/${file}`, { destination: `${processedVideoFolder}/${file}` })));
+    const uploadedFiles = files.map((file) => `${processedVideoFolder}/${file}`);
 
-    await Promise.all(
-      files.map(async (file) => {
-        await bucket.upload(`${folderPath}/${file}`, {
-          destination: `${processedVideoFolder}/${file}`,
-        });
-        console.log(
-          `${folderPath}/${file} uploaded to gs://${processedBucket}/${processedVideoFolder}/${file}`
-        );
-      })
-    );
-
-    const uploadedFiles = files.map(
-      (file) => `${processedVideoFolder}/${file}`
-    );
-    await Promise.all(
-      uploadedFiles.map((filePath) => bucket.file(filePath).makePublic())
-    );
+    await Promise.all(uploadedFiles.map((filePath) => bucket.file(filePath).makePublic()));
     console.log("Processed files have been made public.");
   } catch (error: unknown) {
     console.error(

@@ -15,6 +15,7 @@ export type Video = {
   transcodingProgress?: number;
   retryCount?: number;
   errorMessage?: string;
+  duration?: number,
 };
 
 export enum VideoStatus {
