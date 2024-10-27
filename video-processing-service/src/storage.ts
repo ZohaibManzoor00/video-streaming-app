@@ -6,6 +6,7 @@ import {
   firestore,
   setVideo,
   updateVideo,
+  Video,
   VideoProgress,
   VideoStatus,
 } from "./firebase";
@@ -27,40 +28,128 @@ export function setupDirectories() {
 }
 
 /**
- * Initializes the video processing transaction for a given video.
- *
  * @param {string} videoId - The unique identifier for the video document in Firestore.
  * @param {string} uid - The user ID associated with the video upload.
  * @returns {Promise<void>} A promise that resolves when the video processing initialization completes.
+ * @throws Will throw an error if the video is already being processed or has exceeded the retry limit.
+ */
+// export async function initializeVideoProcessing(
+//   videoId: string,
+//   uid: string
+// ): Promise<void> {
+//   const videoRef = firestore.collection("videos").doc(videoId);
+//   const maxRetries = 5
+
+//   await firestore.runTransaction(async (transaction) => {
+//     const videoDoc = await transaction.get(videoRef);
+
+//     if (!videoDoc.exists) {
+//       await setVideo(
+//         videoId,
+//         {
+//           id: videoId,
+//           uid: uid,
+//           status: VideoStatus.Processing,
+//           progress: VideoProgress.Initializing,
+//           retryCount: 0
+//         },
+//         transaction
+//       );
+//     }
+
+//     const { status, retryCount = 0 } = videoDoc.data() ?? {};
+
+//     if (status === VideoStatus.Processing || status === VideoStatus.Processed) {
+//       throw new Error("Video is already being processed or has been completed.");
+//     }
+
+//     if (status === VideoStatus.Failed && retryCount >= maxRetries) {
+//       await setVideo(videoId, { status: VideoStatus.PermanentlyFailed, progress: VideoProgress.Complete }, transaction);
+//       throw new Error("Video has reached the maximum number of retries.");
+//     }
+
+//     const newRetryCount = status === VideoStatus.Failed ? retryCount + 1 : retryCount;
+
+//     await setVideo(
+//       videoId,
+//       {
+//         id: videoId,
+//         uid: uid,
+//         status: VideoStatus.Processing,
+//         progress: VideoProgress.Initializing,
+//         retryCount: newRetryCount
+//       },
+//       transaction
+//     );
+//   });
+// }
+
+// await setVideo(
+//   videoId,
+//   {
+//     id: videoId,
+//     uid: uid,
+//     status: VideoStatus.Processing,
+//     progress: VideoProgress.Initializing,
+//     retryCount: 0
+//   },
+//   transaction
+// );
+
+/**
+ * @param videoId - The unique identifier for the video document in Firestore.
+ * @param uid - The user ID associated with the video upload.
+ * @returns A promise that resolves when the video processing initialization completes.
+ * @throws Will throw an error if the video is already being processed or has exceeded the retry limit.
  */
 export async function initializeVideoProcessing(
   videoId: string,
   uid: string
 ): Promise<void> {
   const videoRef = firestore.collection("videos").doc(videoId);
+  const maxRetries = 5;
 
   await firestore.runTransaction(async (transaction) => {
     const videoDoc = await transaction.get(videoRef);
+    const data = videoDoc.exists ? videoDoc.data() : {};
+    const status = data?.status as VideoStatus | undefined;
+    const retryCount = data?.retryCount ?? 0;
 
-    if (videoDoc.exists) {
-      const status = videoDoc.data()?.status;
-      if (status && status !== "new") {
-        throw new Error("Video is already being processed.");
-      }
+    if (status === VideoStatus.Processing || status === VideoStatus.Processed) {
+      throw new Error(
+        "Video is already being processed or has been completed."
+      );
     }
 
-    await setVideo(
-      videoId,
-      {
-        id: videoId,
-        uid: uid,
-        status: VideoStatus.Processing,
-        progress: VideoProgress.Initializing,
-      },
-      transaction
-    );
+    if (status === VideoStatus.Failed && retryCount >= maxRetries) {
+      await setVideo(
+        videoId,
+        {
+          status: VideoStatus.PermanentlyFailed,
+          progress: VideoProgress.Complete,
+          errorMessage: 'Maximum retries reached during initialization.',
+          retryCount,
+        },
+        transaction
+      );
+
+      throw new Error("Video has reached the maximum number of retries.");
+    }
+
+    const newRetryCount = status === VideoStatus.Failed ? retryCount + 1 : retryCount;
+
+    const videoData: Video = {
+      id: videoId,
+      uid: uid,
+      status: VideoStatus.Processing,
+      progress: VideoProgress.Initializing,
+      retryCount: newRetryCount,
+    };
+
+    return await setVideo(videoId, videoData, transaction);
   });
 }
+
 
 /**
  * @param rawVideoName - The name of the file to convert from {@link localRawPath}.
@@ -68,18 +157,20 @@ export async function initializeVideoProcessing(
  * @returns A promise that resolves when the video has been converted.
  */
 export function transcodeVideo(
+  videoId: string,
   rawVideoName: string,
   processedVideoFolder: string
 ) {
   return new Promise<void>((resolve, reject) => {
-    // Define paths
     const outputFolder = `${localProcessedPath}/${processedVideoFolder}`;
     const inputVideoPath = `${localRawPath}/${rawVideoName}`;
 
-    // Ensure output folder exists
     ensureDirectoryExistence(outputFolder);
 
-    // Video resolution and bitrate options
+    fs.readdirSync(outputFolder).forEach((file) =>
+      fs.unlinkSync(`${outputFolder}/${file}`)
+    );
+
     const scaleOptions = [
       "scale=640:320",
       "scale=854:480",
@@ -87,32 +178,24 @@ export function transcodeVideo(
       "scale=1920:1080",
     ];
 
-    // Updated bitrates for higher quality
     const videoBitrates = ["1500k", "2500k", "5000k", "8000k"];
 
     const videoCodec = "libx264";
-    const x264Options = "keyint=48:min-keyint=48"; // More frequent keyframes for better quality
+    const x264Options = "keyint=48:min-keyint=48";
 
-    // Clean up previous output files if they exist
-    fs.readdirSync(outputFolder).forEach((file) => {
-      fs.unlinkSync(`${outputFolder}/${file}`);
-    });
-
-    // Initialize FFmpeg process
     const ffmpegProcess = ffmpeg(inputVideoPath)
       .videoCodec(videoCodec)
       .addOption("-x264opts", x264Options)
-      .addOption("-preset", "slow") // Slower encoding for better quality
-      .addOption("-crf", "18") // Lower CRF for higher quality
-      .addOption("-g", "48") // Set GOP size for more frequent keyframes
-      .addOption("-loglevel", "debug"); // Detailed logging for debugging
+      .addOption("-preset", "slow")
+      .addOption("-crf", "18")
+      .addOption("-g", "48")
+      .addOption("-loglevel", "debug");
 
-    // Add output streams for each resolution and bitrate
     scaleOptions.forEach((scale, index) => {
       ffmpegProcess
-        .output(`${outputFolder}/video_${index}.mp4`) // Output files for each resolution
-        .videoFilters(scale) // Apply scaling filter
-        .outputOptions("-b:v", videoBitrates[index]) // Set corresponding bitrate
+        .output(`${outputFolder}/video_${index}.mp4`)
+        .videoFilters(scale)
+        .outputOptions("-b:v", videoBitrates[index])
         .outputOptions("-maxrate", videoBitrates[index])
         .outputOptions(
           "-bufsize",
@@ -120,30 +203,58 @@ export function transcodeVideo(
         );
     });
 
-    // Generate DASH manifest
     ffmpegProcess
-      .output(`${outputFolder}/manifest.mpd`) // Output the DASH manifest file
-      .format("dash") // Explicitly set output format for the manifest
+      .output(`${outputFolder}/manifest.mpd`)
+      .format("dash")
       .addOption("-f", "dash")
-      .addOption("-use_template", "1") // Enable template-based segment naming
-      .addOption("-use_timeline", "1") // Enable timeline-based segmenting
-      .addOption("-seg_duration", "4") // Segment duration in seconds
-      .addOption("-max_muxing_queue_size", "1024") // Prevent buffer errors
-      .addOption("-map", "0:v") // Map all video streams
-      .addOption("-map", "0:a?") // Optionally map audio if present
-      .on("start", () => console.log("Starting FFmpeg transcoding...")) // Start log
-      .on("progress", (progress) => {
-        console.log(`FFmpeg processing: ${progress.percent?.toFixed(2)}% done`);
-      })
-      .on("end", () => {
+      .addOption("-use_template", "1")
+      .addOption("-use_timeline", "1")
+      .addOption("-seg_duration", "4")
+      .addOption("-max_muxing_queue_size", "1024")
+      .addOption("-map", "0:v")
+      .addOption("-map", "0:a?")
+      .on("start", () => console.log("Starting FFmpeg transcoding..."))
+      .on(
+        "progress",
+        (() => {
+          let lastPercent = 0;
+          return async (progress) => {
+            const percent = Math.floor(progress.percent || 0);
+            console.log(`FFmpeg processing: ${progress.percent?.toFixed(2)}% done`);
+
+            if (percent - lastPercent >= 5 || percent >= 99) {
+              lastPercent = percent;
+              try {
+                await setVideo(videoId, { transcodingProgress: percent });
+              } catch (err) {
+                console.error(
+                  `Failed to update progress for video ${videoId}:`,
+                  err
+                );
+              }
+            }
+          };
+        })()
+      )
+      .on("end", async () => {
         console.log("FFmpeg transcoding finished successfully");
+        try {
+          await setVideo(videoId, { transcodingProgress: 100 });
+        } catch (err) {
+          console.error(`Failed to update progress for video ${videoId}:`, err);
+        }
         resolve();
       })
-      .on("error", (err: any) => {
+      .on("error", async (err: any) => {
         console.log("An error occurred during transcoding: " + err.message);
+        try {
+          await setVideo(videoId, { transcodingProgress: 0 });
+        } catch (err) {
+          console.error(`Failed to update progress for video ${videoId}:`, err);
+        }
         reject(err);
       })
-      .run(); // Execute the FFmpeg process
+      .run();
   });
 }
 
@@ -153,16 +264,21 @@ export function transcodeVideo(
  * @returns A promise that resolves when the file has been downloaded.
  */
 export async function downloadRawVideo(fileName: string) {
-  await storage
-    .bucket(rawBucket)
-    .file(fileName)
-    .download({
-      destination: `${localRawPath}/${fileName}`,
-    });
+  try {
+    await storage
+      .bucket(rawBucket)
+      .file(fileName)
+      .download({ destination: `${localRawPath}/${fileName}` });
 
-  console.log(
-    `gs://${rawBucket}/${fileName} downloaded to ${localRawPath}/${fileName}.`
-  );
+    console.info(`gs://${rawBucket}/${fileName} downloaded to ${localRawPath}/${fileName}.`);
+  } catch (error: unknown) {
+    console.error(
+      error instanceof Error
+        ? `Error ocurred downloading 'raw' video: ${error}`
+        : "An unknown error occurred downloading 'raw' video."
+    );
+    throw error;
+  }
 }
 
 /**
@@ -174,23 +290,35 @@ export async function uploadProcessedVideo(processedVideoFolder: string) {
   const folderPath = `${localProcessedPath}/${processedVideoFolder}`;
   const bucket = storage.bucket(processedBucket);
 
-  // Upload all files (MPD + segments) in the folder
-  const files = fs.readdirSync(folderPath);
-  for (const file of files) {
-    await bucket.upload(`${folderPath}/${file}`, {
-      destination: `${processedVideoFolder}/${file}`,
-    });
-    console.log(
-      `${folderPath}/${file} uploaded to gs://${processedBucket}/${processedVideoFolder}/${file}`
-    );
-  }
+  try {
+    const files = await fs.promises.readdir(folderPath);
 
-  // Set the manifest and segments to be publicly readable
-  const uploadedFiles = files.map((file) => `${processedVideoFolder}/${file}`);
-  await Promise.all(
-    uploadedFiles.map((filePath) => bucket.file(filePath).makePublic())
-  );
-  console.log("Processed files have been made public.");
+    await Promise.all(
+      files.map(async (file) => {
+        await bucket.upload(`${folderPath}/${file}`, {
+          destination: `${processedVideoFolder}/${file}`,
+        });
+        console.log(
+          `${folderPath}/${file} uploaded to gs://${processedBucket}/${processedVideoFolder}/${file}`
+        );
+      })
+    );
+
+    const uploadedFiles = files.map(
+      (file) => `${processedVideoFolder}/${file}`
+    );
+    await Promise.all(
+      uploadedFiles.map((filePath) => bucket.file(filePath).makePublic())
+    );
+    console.log("Processed files have been made public.");
+  } catch (error: unknown) {
+    console.error(
+      error instanceof Error
+        ? `Error uploading processed video files: ${error}`
+        : "An unknown error occurred during upload."
+    );
+    throw error;
+  }
 }
 
 /**
@@ -286,23 +414,19 @@ function ensureDirectoryExistence(dirPath: string) {
   }
 }
 
-// export async function deleteLocalVideoFiles(
-//   rawFilename: string,
-//   processedFolder: string
-// ) {
-//   await Promise.all([
-//     deleteLocalRawVideo(rawFilename),
-//     deleteLocalProcessedVideo(processedFolder),
-//   ]);
-// }
-
+/**
+ * @param req - The incoming Express request containing the Pub/Sub message.
+ * @returns The name of the video file extracted from the Pub/Sub message.
+ * @throws Will throw an error if the message payload is invalid or cannot be parsed.
+ */
 export function readQueueMessage(req: Request) {
   try {
     const message = Buffer.from(req.body.message.data, "base64").toString(
       "utf8"
     );
     const data = JSON.parse(message);
-    if (!data.name) throw new Error("Invalid message payload received.");
+    if (!data || !data.name)
+      throw new Error("Invalid message payload received.");
     return data.name;
   } catch (err: any) {
     console.error(err);
@@ -310,6 +434,13 @@ export function readQueueMessage(req: Request) {
   }
 }
 
+/**
+ * Cleans up local files related to video processing.
+ *
+ * @param inputFileName - The name of the raw video file to delete.
+ * @param outputFolderName - The name of the local folder containing processed video files.
+ * @returns A promise that resolves when all cleanup tasks are completed.
+ */
 export async function cleanup(inputFileName: string, outputFolderName: string) {
   const res = await Promise.allSettled([
     deleteLocalRawVideo(inputFileName),
@@ -333,10 +464,11 @@ export async function finalizeProcessing(
   inputFileName: string,
   outputFolderName: string
 ) {
-  console.log("Finalizing video processing...");
-
   const results = await Promise.allSettled([
-    setVideo(videoId, { status: VideoStatus.Processed, progress: VideoProgress.Complete }),
+    setVideo(videoId, {
+      status: VideoStatus.Processed,
+      progress: VideoProgress.Complete,
+    }),
     cleanup(inputFileName, outputFolderName),
     deleteRawVideoFromBucket(inputFileName),
   ]);
@@ -349,8 +481,6 @@ export async function finalizeProcessing(
 }
 
 /**
- * Handles errors during video processing and performs necessary cleanup.
- * 
  * @param res - The Express response object used to send the HTTP status code.
  * @param err - The error that occurred, which can be of any type.
  * @param videoId - The unique identifier for the video, or null if not available.
@@ -367,25 +497,65 @@ export const handleError = async (
   inputFileName: string | null,
   outputFolderName: string | null
 ) => {
+  if (!videoId) {
+    console.error(
+      `Video ID is missing. Cannot update video status. ${statusMessage}: ${
+        err instanceof Error ? err.message : 'An unknown error occurred.'
+      }`
+    );
+    return res.sendStatus(500);
+  }
+
   try {
-    if (videoId)
-      await setVideo(videoId, {
-        status: VideoStatus.Failed,
-        progress: VideoProgress.Complete,
-      });
-    if (inputFileName && outputFolderName)
-      await cleanup(inputFileName, outputFolderName);
+    const videoRef = firestore.collection('videos').doc(videoId);
+    const videoDoc = await videoRef.get();
+    const currentData = videoDoc.data() || {};
+    const retryCount = (currentData.retryCount ?? 0) + 1;
+    const maxRetries = 5;
 
-    if (err instanceof Error) console.log(`${statusMessage}: ${err.message}`);
-    else console.error("An unknown error occurred during cleanup.");
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
 
-    res.sendStatus(500);
+    let statusUpdate: Partial<Video>;
+
+    statusUpdate = {
+      status: retryCount >= maxRetries ? VideoStatus.PermanentlyFailed : VideoStatus.Failed,
+      progress: VideoProgress.Complete,
+      retryCount,
+      errorMessage,
+    };
+
+    await setVideo(videoId, statusUpdate);
+
+    if (inputFileName && outputFolderName) await cleanup(inputFileName, outputFolderName);
+
+    const logMessage = `[${videoId}] ${statusMessage}: ${errorMessage}`;
+    console.error(logMessage);
+
+    if (retryCount >= maxRetries) return res.status(200).send('Video has reached the maximum number of retries.');
+      
+    return res.sendStatus(500);
   } catch (handleErr) {
-    console.error(`Error in handleError: ${handleErr}`);
-    // Even if handleError fails, we need to ensure we don't throw unhandled exceptions
-    if (!res.headersSent) {
-      res.sendStatus(500);
+    console.error(
+      `Error in handleError for video ${videoId}: ${
+        handleErr instanceof Error ? handleErr.message : 'An unknown error occurred.'
+      }. Original error: ${err instanceof Error ? err.message : 'An unknown error occurred.'}`
+    );
+
+    try {
+      await setVideo(videoId, {
+        status: VideoStatus.PermanentlyFailed,
+        progress: VideoProgress.Complete,
+        errorMessage: 'Error in handleError: ' + (handleErr instanceof Error ? handleErr.message : 'Unknown error'),
+      });
+    } catch (finalFallbackErr) {
+      console.error(
+        `Failed to mark video as PermanentlyFailed for video ${videoId}: ${
+          finalFallbackErr instanceof Error ? finalFallbackErr.message : 'An unknown error occurred.'
+        }`
+      );
     }
+
+    if (!res.headersSent) return res.status(200).send('An error occurred while handling the error.');
   }
 };
 

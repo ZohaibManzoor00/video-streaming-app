@@ -6,27 +6,30 @@ initializeApp({ credential: credential.applicationDefault() });
 export const firestore = new Firestore();
 const videoCollectionId = "videos";
 
-type Video = {
+export type Video = {
   id?: string;
   uid?: string;
   filename?: string;
   status?: VideoStatus;
-  progress?: VideoProgress
-  mpd_url?: string;
+  progress?: VideoProgress;
+  transcodingProgress?: number;
+  retryCount?: number;
+  errorMessage?: string;
 };
 
 export enum VideoStatus {
-  Processing = 'processing',
-  Processed = 'processed',
-  Failed = 'failed',
+  Processing = "processing",
+  Processed = "processed",
+  Failed = "failed",
+  PermanentlyFailed = "permanently failed",
 }
 
 export enum VideoProgress {
-  Initializing = 'initializing',
-  Downloading = 'downloading',
-  Transcoding = 'transcoding',
-  Uploading = 'uploading',
-  Complete = 'complete',
+  Initializing = "initializing",
+  Downloading = "downloading",
+  Transcoding = "transcoding",
+  Uploading = "uploading",
+  Complete = "complete",
 }
 
 export const getVideo = async (videoId: string): Promise<Video> => {
@@ -59,7 +62,7 @@ export const updateVideo = async (
   videoId: string,
   status: VideoStatus,
   progress: VideoProgress,
-  filename: null | string = null,
+  filename: null | string = null
 ) => {
   const updateData: Partial<Video> = { status, progress };
   if (filename) updateData.filename = filename;
