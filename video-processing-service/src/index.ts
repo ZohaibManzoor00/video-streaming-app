@@ -11,6 +11,7 @@ import {
   initializeVideoProcessing,
 } from "./storage";
 import path from 'path';
+import { generateThumbnail } from "./thumbnail";
 
 const app = express();
 app.use(express.json());
@@ -73,6 +74,15 @@ app.post("/process-video", async (req: Request, res: Response) => {
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred when transcoding.';
     console.error(`[${videoId}] Transcoding failed. Error:`, errorMessage);
     return handleError(res, err, videoId, "Transcoding failed", inputFileName, outputFolderName);
+  }
+
+  console.info(`[${videoId}] Generating thumbnail...`);
+  try {
+    await generateThumbnail(videoId, inputFileName, outputFolderName);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+    console.error(`[${videoId}] Thumbnail generation failed. Error:`, errorMessage);
+    return handleError(res, err, videoId, "Thumbnail creation failed.", inputFileName, outputFolderName)
   }
 
   console.info(`[${videoId}] Uploading processed video...`);
