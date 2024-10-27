@@ -1,5 +1,7 @@
 import express, { Request, Response } from "express";
 import { setVideo, VideoProgress } from "./firebase";
+import { generateThumbnail } from "./thumbnail";
+import path from 'path';
 import {
   uploadProcessedVideo,
   downloadRawVideo,
@@ -10,8 +12,6 @@ import {
   finalizeProcessing,
   initializeVideoProcessing,
 } from "./storage";
-import path from 'path';
-import { generateThumbnail } from "./thumbnail";
 
 const app = express();
 app.use(express.json());
@@ -85,7 +85,7 @@ app.post("/process-video", async (req: Request, res: Response) => {
     return handleError(res, err, videoId, "Thumbnail creation failed.", inputFileName, outputFolderName)
   }
 
-  console.info(`[${videoId}] Uploading processed video...`);
+  console.info(`[${videoId}] Uploading processed files...`);
   try {
     await setVideo(videoId, { progress: VideoProgress.Uploading });
     await uploadProcessedVideo(outputFolderName);
