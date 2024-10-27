@@ -273,6 +273,26 @@ export function deleteLocalRawVideo(fileName: string): Promise<void> {
 }
 
 /**
+ * @param videoId - The ID of the video.
+ * @param inputFileName - The name of the raw video file.
+ * @param outputFolderName - The name of the local output folder.
+ * @returns A promise that resolves when the local folder and raw video contents have been deleted.
+ */
+export async function finalizeProcessing(videoId: string, inputFileName: string, outputFolderName: string): Promise<void> {
+  const results = await Promise.allSettled([
+    setVideo(videoId, {status: VideoStatus.Processed, progress: VideoProgress.Complete }),
+    cleanup(inputFileName, outputFolderName),
+    deleteRawVideoFromBucket(inputFileName),
+  ]);
+
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      console.error(`Finalization task ${index + 1} failed: ${result.reason}`);
+    }
+  });
+}
+
+/**
  * @param filePath - The path of the file to delete.
  * @returns A promise that resolves when the file has been deleted.
  */
@@ -360,26 +380,6 @@ export async function cleanup(inputFileName: string, outputFolderName: string): 
   res.forEach((req, index) => {
     if (req.status === "rejected") {
       console.error(`Cleanup task ${index + 1} failed: ${req.reason}`);
-    }
-  });
-}
-
-/**
- * @param videoId - The ID of the video.
- * @param inputFileName - The name of the raw video file.
- * @param outputFolderName - The name of the local output folder.
- * @returns A promise that resolves when the local folder and raw video contents have been deleted.
- */
-export async function finalizeProcessing(videoId: string, inputFileName: string, outputFolderName: string): Promise<void> {
-  const results = await Promise.allSettled([
-    setVideo(videoId, {status: VideoStatus.Processed, progress: VideoProgress.Complete }),
-    cleanup(inputFileName, outputFolderName),
-    deleteRawVideoFromBucket(inputFileName),
-  ]);
-
-  results.forEach((result, index) => {
-    if (result.status === "rejected") {
-      console.error(`Finalization task ${index + 1} failed: ${result.reason}`);
     }
   });
 }
