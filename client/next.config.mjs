@@ -13,7 +13,7 @@ const nextConfig = {
         protocol: "https",
         hostname: "storage.googleapis.com", 
         port: "", // No specific port needed
-        pathname: "/marcy-yt-processed-images/**", // Matches all images under this path
+        pathname: "/marcy-yt-processed-videos/**", // Matches all images under this path
       },
       {
         protocol: "https",

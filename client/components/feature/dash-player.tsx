@@ -79,6 +79,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import dashjs from "dashjs";
 import { useSearchParams } from "next/navigation";
+import { handlePlay } from "@/firebase/videos";
 
 // Extend Navigator and NetworkInformation interfaces
 declare global {
@@ -96,18 +97,19 @@ declare global {
   }
 }
 
-const DashPlayer: React.FC = () => {
+const DashPlayer = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<dashjs.MediaPlayerClass | null>(null);
   const [availableQualities, setAvailableQualities] = useState<dashjs.BitrateInfo[]>([]);
   const [selectedQualityIndex, setSelectedQualityIndex] = useState<number>(-1); // -1 for auto quality
+  const [viewIncremented, setViewIncremented] = useState(false)
 
   const searchParams = useSearchParams();
-  const videoSrc = searchParams.get("v") || '';
+  const videoId = searchParams.get("v") || '';
 
-  if (!videoSrc) return <div>Not Found</div>;
+  if (!videoId) return <div>Not Found</div>;
 
-  const url = `https://storage.googleapis.com/marcy-yt-processed-videos/${videoSrc}/manifest.mpd`;
+  const url = `https://storage.googleapis.com/marcy-yt-processed-videos/${videoId}/manifest.mpd`;
 
   // Define event handlers
   const onStreamInitialized = () => {
@@ -223,9 +225,18 @@ const DashPlayer: React.FC = () => {
     }
   }, [selectedQualityIndex]);
 
+  const handlePlayEvent = () => {
+    if (!viewIncremented) {
+      handlePlay(videoId);
+      setViewIncremented(true);
+    }
+  };
+
+
   return (
     <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
       <video
+        onPlay={handlePlayEvent}
         ref={videoRef}
         controls
         style={{ width: '100%' }}

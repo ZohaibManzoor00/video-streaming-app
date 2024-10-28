@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as logger from "firebase-functions/logger";
 import {initializeApp} from "firebase-admin/app";
-import {Firestore} from "firebase-admin/firestore";
+import {Firestore, FieldValue} from "firebase-admin/firestore";
 import {Storage} from "@google-cloud/storage";
 import {onCall} from "firebase-functions/v2/https";
 
@@ -53,10 +53,45 @@ export const createUser = functions.auth.user().onCreate((user) => {
 const videoCollectionId = "videos";
 
 export const getVideos = onCall({maxInstances: 1}, async () => {
-  const querySnapshot = await firestore
-    .collection(videoCollectionId)
-    .get();
-  return querySnapshot.docs.map((doc) => doc.data());
+  try {
+    const querySnapshot = await firestore
+      .collection(videoCollectionId)
+      .where("progress", "==", "Completed")
+      .get();
+
+    return querySnapshot.docs.map((doc) => doc.data());
+  } catch {
+    console.error("Error fetching completed videos");
+    throw new Error("Failed to fetch completed videos.");
+  }
+});
+
+export const incrementViewCount = onCall({maxInstances: 1}, async (request) => {
+  const {videoId} = request.data;
+
+  if (!videoId) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "The function must be called with a valid videoId."
+    );
+  }
+
+  try {
+    const videoRef = firestore.collection(videoCollectionId).doc(videoId);
+    await videoRef.update({viewCount: FieldValue.increment(1)});
+
+    return {success: true};
+  } catch (error: unknown) {
+    console.error("Error incrementing view count:",
+      error instanceof Error ?
+        error.message :
+        "Error incrementing viewer count.");
+    throw new functions.https.HttpsError(
+      "internal",
+      "Failed to increment view count.",
+      {error}
+    );
+  }
 });
 
 export const checkVideoStatus = onCall(
