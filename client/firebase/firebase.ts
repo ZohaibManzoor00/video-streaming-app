@@ -15,9 +15,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }; 
 
-const app = initializeApp(firebaseConfig);
+const firebase = initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
+const auth = getAuth(firebase);
 
 export const functions = getFunctions();
 export const rawVideoBucketName = "marcy-yt-raw-videos";

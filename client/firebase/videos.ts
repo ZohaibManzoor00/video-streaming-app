@@ -4,23 +4,40 @@ import { functions } from "./firebase";
 const generateUploadUrlFunction = httpsCallable(functions, "generateUploadUrl");
 const getVideosFunction = httpsCallable(functions, "getVideos");
 const checkVideoStatusFunction = httpsCallable(functions, "checkVideoStatus");
+const incrementViewCountFunction = httpsCallable(functions, "incrementViewCount");
 
 const rawVideoBucketName = "marcy-yt-raw-videos";
 
-type Video = {
+export type Video = {
   id?: string;
   uid?: string;
   filename?: string;
-  status?: "processing" | "processed" | "failed";
-  progress?:
-    | "initializing"
-    | "downloading"
-    | "processing"
-    | "uploading"
-    | "complete";
+  status?: VideoStatus;
+  progress?: VideoProgress;
+  transcodingProgress?: number;
+  retryCount?: number;
+  errorMessage?: string;
+  duration?: number,
+  createdAt?: Date,
+  viewCount?: number
 };
 
-export async function uploadVideo(file: File) {
+export enum VideoStatus {
+  Processing = "processing",
+  Processed = "processed",
+  Failed = "failed",
+  PermanentlyFailed = "permanently failed",
+}
+
+export enum VideoProgress {
+  Initializing = "initializing",
+  Downloading = "downloading",
+  Transcoding = "transcoding",
+  Uploading = "uploading",
+  Complete = "complete",
+}
+
+export const uploadVideo = async (file: File) => {
   const response: any = await generateUploadUrlFunction({
     fileExtension: file.name.split(".").pop(),
     bucket: rawVideoBucketName,
@@ -42,12 +59,21 @@ export async function uploadVideo(file: File) {
   return { filename };
 }
 
-export async function checkVideoStatus(fileName: any) {
+export const checkVideoStatus = async (fileName: any) => {
   const res = await checkVideoStatusFunction({ fileName });
   return res.data as { status: Video["status"], progress: Video["progress"]};
 }
 
-export async function getVideos() {
+export const getVideos = async () => {
   const res = await getVideosFunction();
   return res.data as Video[];
 }
+
+export const handlePlay = async (videoId: string) => {
+  try {
+    await incrementViewCountFunction({ videoId });
+    console.log("View count incremented successfully");
+  } catch (error) {
+    console.error("Error incrementing view count:", error);
+  }
+};

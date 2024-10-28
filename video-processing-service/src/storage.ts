@@ -1,14 +1,7 @@
 import fs from "fs";
-import ffmpeg from "fluent-ffmpeg";
-import { Storage } from "@google-cloud/storage";
 import { Request, Response } from "express";
-import {
-  firestore,
-  setVideo,
-  Video,
-  VideoProgress,
-  VideoStatus,
-} from "./firebase";
+import { Storage } from "@google-cloud/storage";
+import { firestore, setVideo, Video, VideoProgress, VideoStatus } from "./firebase";
 
 const storage = new Storage();
 
@@ -19,14 +12,28 @@ export const localRawPath = "./raw-videos";
 export const localProcessedPath = "./processed-videos";
 
 /**
- * Initializes local directories for raw and processed videos.
+ * * Sets up necessary local directories for video processing.
  */
-export function setupDirectories() {
+export const setupDirectories = (): void => {
   ensureDirectoryExistence(localRawPath);
   ensureDirectoryExistence(localProcessedPath);
-}
+};
 
 /**
+ * * Ensures a directory exists, creating it if necessary.
+ *
+ * @param {string} dirPath - The directory path to check.
+ */
+export const ensureDirectoryExistence = (dirPath: string): void => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`Directory created at ${dirPath}`);
+  }
+};
+
+/**
+ * * Extracts the video file name from a Pub/Sub message.
+ *
  * @param req - The incoming Express request containing the Pub/Sub message.
  * @returns The name of the video file extracted from the Pub/Sub message.
  * @throws Will throw an error if the message payload is invalid or cannot be parsed.
@@ -36,7 +43,9 @@ export function readQueueMessage(req: Request): string {
     throw new Error("Invalid Pub/Sub message format: Missing 'data' field.");
   }
 
-  const messageData = Buffer.from(req.body.message.data, "base64").toString("utf8");
+  const messageData = Buffer.from(req.body.message.data, "base64").toString(
+    "utf8"
+  );
 
   let data;
   try {
@@ -46,74 +55,31 @@ export function readQueueMessage(req: Request): string {
   }
 
   if (!data.name) {
-    throw new Error("Invalid Pub/Sub message: Missing 'name' field in data payload.");
+    throw new Error(
+      "Invalid Pub/Sub message: Missing 'name' field in data payload."
+    );
   }
 
   return data.name;
 }
 
 /**
- * @param {string} videoId - The unique identifier for the video document in Firestore.
- * @param {string} uid - The user ID associated with the video upload.
- * @returns {Promise<void>} A promise that resolves when the video processing initialization completes.
- * @throws Will throw an error if the video is already being processed or has exceeded the retry limit.
- */
-export async function initializeVideoProcessing(videoId: string, uid: string): Promise<void> {
-  const videoRef = firestore.collection("videos").doc(videoId);
-  const maxRetries = 5;
-
-  await firestore.runTransaction(async (transaction) => {
-    const videoDoc = await transaction.get(videoRef);
-    const data = videoDoc.exists ? videoDoc.data() : {};
-    const status = data?.status as VideoStatus | undefined;
-    const retryCount = data?.retryCount ?? 0;
-
-    if (status === VideoStatus.Processing || status === VideoStatus.Processed) {
-      throw new Error("Video is already being processed or has been completed.");
-    }
-
-    if (status === VideoStatus.Failed && retryCount >= maxRetries) {
-      await setVideo(
-        videoId,
-        {
-          status: VideoStatus.PermanentlyFailed,
-          progress: VideoProgress.Complete,
-          errorMessage: 'Maximum retries reached during initialization.',
-          retryCount,
-        },
-        transaction
-      );
-
-      throw new Error("Video has reached the maximum number of retries.");
-    }
-
-    const newRetryCount = status === VideoStatus.Failed ? retryCount + 1 : retryCount;
-
-    const videoData: Video = {
-      id: videoId,
-      uid: uid,
-      status: VideoStatus.Processing,
-      progress: VideoProgress.Initializing,
-      retryCount: newRetryCount,
-    };
-
-    return await setVideo(videoId, videoData, transaction);
-  });
-}
-
-/**
+ * * Downloads a raw video file from Google Cloud Storage to the local filesystem.
+ *
  * @param fileName - The name of the file to download from the
  * {@link rawBucket} bucket into the {@link localRawPath} folder.
  * @returns A promise that resolves when the file has been downloaded.
  */
-export async function downloadRawVideo(fileName: string): Promise<void> {
+export const downloadRawVideo = async (fileName: string): Promise<void> => {
   try {
     await storage
       .bucket(rawBucket)
       .file(fileName)
       .download({ destination: `${localRawPath}/${fileName}` });
 
-    console.info(`gs://${rawBucket}/${fileName} downloaded to ${localRawPath}/${fileName}.`);
+    console.info(
+      `gs://${rawBucket}/${fileName} downloaded to ${localRawPath}/${fileName}.`
+    );
   } catch (error: unknown) {
     console.error(
       error instanceof Error
@@ -122,126 +88,35 @@ export async function downloadRawVideo(fileName: string): Promise<void> {
     );
     throw error;
   }
-}
+};
 
 /**
- * @param rawVideoName - The name of the file to convert from {@link localRawPath}.
- * @param processedVideoName - The name of the file to convert to {@link localProcessedPath}.
- * @returns A promise that resolves when the video has been converted.
- */
-export function transcodeVideo(videoId: string, rawVideoName: string, processedVideoFolder: string): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const outputFolder = `${localProcessedPath}/${processedVideoFolder}`;
-    const inputVideoPath = `${localRawPath}/${rawVideoName}`;
-
-    ensureDirectoryExistence(outputFolder);
-
-    fs.readdirSync(outputFolder).forEach((file) =>
-      fs.unlinkSync(`${outputFolder}/${file}`)
-    );
-
-    const scaleOptions = [
-      "scale=640:320",
-      "scale=854:480",
-      "scale=1280:720",
-      "scale=1920:1080",
-    ];
-
-    const videoBitrates = ["1500k", "2500k", "5000k", "8000k"];
-
-    const videoCodec = "libx264";
-    const x264Options = "keyint=48:min-keyint=48";
-
-    const ffmpegProcess = ffmpeg(inputVideoPath)
-      .videoCodec(videoCodec)
-      .addOption("-x264opts", x264Options)
-      .addOption("-preset", "slow")
-      .addOption("-crf", "18")
-      .addOption("-g", "48")
-      .addOption("-loglevel", "debug");
-
-    scaleOptions.forEach((scale, index) => {
-      ffmpegProcess
-        .output(`${outputFolder}/video_${index}.mp4`)
-        .videoFilters(scale)
-        .outputOptions("-b:v", videoBitrates[index])
-        .outputOptions("-maxrate", videoBitrates[index])
-        .outputOptions(
-          "-bufsize",
-          `${parseInt(videoBitrates[index], 10) * 2}k`
-        );
-    });
-
-    ffmpegProcess
-      .output(`${outputFolder}/manifest.mpd`)
-      .format("dash")
-      .addOption("-f", "dash")
-      .addOption("-use_template", "1")
-      .addOption("-use_timeline", "1")
-      .addOption("-seg_duration", "4")
-      .addOption("-max_muxing_queue_size", "1024")
-      .addOption("-map", "0:v")
-      .addOption("-map", "0:a?")
-      .on("start", () => console.log("Starting FFmpeg transcoding..."))
-      .on(
-        "progress",
-        (() => {
-          let lastPercent = 0;
-          return async (progress) => {
-            const percent = Math.floor(progress.percent || 0);
-            console.log(`FFmpeg processing: ${progress.percent?.toFixed(2)}% done`);
-
-            if (percent - lastPercent >= 5 || percent >= 99) {
-              lastPercent = percent;
-              try {
-                await setVideo(videoId, { transcodingProgress: percent });
-              } catch (err) {
-                console.error(
-                  `Failed to update progress for video ${videoId}:`,
-                  err
-                );
-              }
-            }
-          };
-        })()
-      )
-      .on("end", async () => {
-        console.log("FFmpeg transcoding finished successfully");
-        try {
-          await setVideo(videoId, { transcodingProgress: 100 });
-        } catch (err) {
-          console.error(`Failed to update progress for video ${videoId}:`, err);
-        }
-        resolve();
-      })
-      .on("error", async (err: any) => {
-        console.log("An error occurred during transcoding: " + err.message);
-        try {
-          await setVideo(videoId, { transcodingProgress: 0 });
-        } catch (err) {
-          console.error(`Failed to update progress for video ${videoId}:`, err);
-        }
-        reject(err);
-      })
-      .run();
-  });
-}
-
-/**
+ * * Uploads processed video files from the local filesystem to Google Cloud Storage and makes them public.
+ *
  * @param fileName - The name of the file to upload from the
  * {@link localProcessedPath} folder into the {@link processedBucket}.
  * @returns A promise that resolves when the file has been uploaded.
  */
-export async function uploadProcessedVideo(processedVideoFolder: string): Promise<void> {
+export const uploadProcessedVideo = async (processedVideoFolder: string): Promise<void> => {
   const folderPath = `${localProcessedPath}/${processedVideoFolder}`;
   const bucket = storage.bucket(processedBucket);
 
   try {
     const files = await fs.promises.readdir(folderPath);
-    await Promise.all(files.map(async (file) => await bucket.upload(`${folderPath}/${file}`, { destination: `${processedVideoFolder}/${file}` })));
-    const uploadedFiles = files.map((file) => `${processedVideoFolder}/${file}`);
+    await Promise.all(
+      files.map(async (file) => {
+        await bucket.upload(`${folderPath}/${file}`, {
+          destination: `${processedVideoFolder}/${file}`,
+        });
+      })
+    );
 
-    await Promise.all(uploadedFiles.map((filePath) => bucket.file(filePath).makePublic()));
+    const uploadedFiles = files.map(
+      (file) => `${processedVideoFolder}/${file}`
+    );
+    await Promise.all(
+      uploadedFiles.map((filePath) => bucket.file(filePath).makePublic())
+    );
     console.log("Processed files have been made public.");
   } catch (error: unknown) {
     console.error(
@@ -251,52 +126,36 @@ export async function uploadProcessedVideo(processedVideoFolder: string): Promis
     );
     throw error;
   }
-}
+};
 
 /**
- * @param fileName - The name of the file to delete from the
- * {@link rawBucket} bucket.
+ * * Deletes a raw video file from the 'raw' Google Cloud Storage bucket.
+ *
+ * @param fileName - The name of the file to delete from the {@link rawBucket} bucket.
  * @returns A promise that resolves when the file has been deleted.
  */
-export async function deleteRawVideoFromBucket(fileName: string): Promise<void> {
+export const deleteRawVideoFromBucket = async (fileName: string): Promise<void> => {
   await storage.bucket(rawBucket).file(fileName).delete();
-}
+};
 
 /**
- * @param fileName - The name of the file to delete from the
- * {@link localRawPath} folder.
+ * * Executes a function that deletes the raw video file from the local filesystem.
+ *
+ * @param fileName - The name of the file to delete from the {@link localRawPath} folder.
  * @returns A promise that resolves when the file has been deleted.
  *
  */
-export function deleteLocalRawVideo(fileName: string): Promise<void> {
+export const deleteLocalRawVideo = async (fileName: string): Promise<void> => {
   return deleteFile(`${localRawPath}/${fileName}`);
-}
+};
 
 /**
- * @param videoId - The ID of the video.
- * @param inputFileName - The name of the raw video file.
- * @param outputFolderName - The name of the local output folder.
- * @returns A promise that resolves when the local folder and raw video contents have been deleted.
- */
-export async function finalizeProcessing(videoId: string, inputFileName: string, outputFolderName: string): Promise<void> {
-  const results = await Promise.allSettled([
-    setVideo(videoId, {status: VideoStatus.Processed, progress: VideoProgress.Complete }),
-    cleanup(inputFileName, outputFolderName),
-    deleteRawVideoFromBucket(inputFileName),
-  ]);
-
-  results.forEach((result, index) => {
-    if (result.status === "rejected") {
-      console.error(`Finalization task ${index + 1} failed: ${result.reason}`);
-    }
-  });
-}
-
-/**
+ * * Deletes a specific file from the filesystem
+ * 
  * @param filePath - The path of the file to delete.
  * @returns A promise that resolves when the file has been deleted.
  */
-function deleteFile(filePath: string): Promise<void> {
+const deleteFile = (filePath: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
@@ -313,24 +172,25 @@ function deleteFile(filePath: string): Promise<void> {
       resolve();
     }
   });
-}
+};
 
 /**
- * @param folderName - The name of the folder to delete from the
- * {@link localProcessedPath} folder.
+ * * Deletes the processed video folder from the local filesystem.
+ * 
+ * @param folderName - The name of the folder to delete from the {@link localProcessedPath} folder.
  * @returns A promise that resolves when the folder and its content's have been deleted.
  */
-export function deleteLocalProcessedVideo(folderName: string): Promise<void> {
+export const deleteLocalProcessedVideo = async (folderName: string): Promise<void> => {
   return deleteFolder(`${localProcessedPath}/${folderName}`);
-}
+};
 
 /**
- * Deletes a folder and all its contents (files and subfolders).
+ * * Deletes a folder and all its contents (files and subfolders).
  *
  * @param folder - The path of the folder to delete.
  * @returns A promise that resolves when the folder and its contents have been deleted.
  */
-function deleteFolder(folder: string): Promise<void> {
+const deleteFolder = (folder: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (fs.existsSync(folder)) {
       fs.rm(folder, { recursive: true }, (err) => {
@@ -338,40 +198,25 @@ function deleteFolder(folder: string): Promise<void> {
           console.error(`Failed to delete folder at ${folder}`, err);
           reject(err);
         } else {
-          console.log(
-            `Local processed folder and its contents deleted at ${folder}`
-          );
+          console.log(`Local processed folder and its contents deleted at ${folder}`);
           resolve();
         }
       });
     } else {
-      console.log(
-        `${folder} not found at ${localProcessedPath}, skipping delete.`
-      );
+      console.log(`${folder} not found at ${localProcessedPath}, skipping delete.`);
       resolve();
     }
   });
-}
+};
 
 /**
- * Ensures a directory exists, creating it if necessary.
- * @param {string} dirPath - The directory path to check.
- */
-function ensureDirectoryExistence(dirPath: string): void {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-    console.log(`Directory created at ${dirPath}`);
-  }
-}
-
-/**
- * Cleans up local files related to video processing.
+ * * Cleans up local files related to video processing.
  *
  * @param inputFileName - The name of the raw video file to delete.
  * @param outputFolderName - The name of the local folder containing processed video files.
  * @returns A promise that resolves when all cleanup tasks are completed.
  */
-export async function cleanup(inputFileName: string, outputFolderName: string): Promise<void> {
+export const cleanup = async (inputFileName: string, outputFolderName: string): Promise<void> => {
   const res = await Promise.allSettled([
     deleteLocalRawVideo(inputFileName),
     deleteLocalProcessedVideo(outputFolderName),
@@ -382,11 +227,11 @@ export async function cleanup(inputFileName: string, outputFolderName: string): 
       console.error(`Cleanup task ${index + 1} failed: ${req.reason}`);
     }
   });
-}
+};
 
 /**
- * Handles errors during video processing, updates the video status, and performs cleanup.
- * 
+ * * Handles errors during video processing, updates the video status, and performs cleanup.
+ *
  * @param res - The Express response object used to send the HTTP status code.
  * @param err - The error that occurred, which can be of any type.
  * @param videoId - The unique identifier for the video, or null if not available.
@@ -403,16 +248,16 @@ export const handleError = async (
   inputFileName: string | null,
   outputFolderName: string | null
 ): Promise<Response> => {
-  if (!videoId) return res.status(200).send("Invalid message received and will not be retried.")
+  if (!videoId) return res.status(200).send("Invalid message received and will not be retried.");
 
   try {
-    const videoRef = firestore.collection('videos').doc(videoId);
+    const videoRef = firestore.collection("videos").doc(videoId);
     const videoDoc = await videoRef.get();
     const currentData = videoDoc.data() || {};
     const retryCount = (currentData.retryCount ?? 0) + 1;
     const maxRetries = 5;
 
-    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
 
     let statusUpdate: Partial<Video>;
 
@@ -430,31 +275,35 @@ export const handleError = async (
     const logMessage = `[${videoId}] ${statusMessage}: ${errorMessage}`;
     console.error(logMessage);
 
-    if (retryCount >= maxRetries) return res.status(200).send('Video has reached the maximum number of retries.');
-      
+    if (retryCount >= maxRetries) return res.status(200).send("Video has reached the maximum number of retries.");
+
     return res.sendStatus(500);
   } catch (handleErr) {
     console.error(
       `Error in handleError for video ${videoId}: ${
-        handleErr instanceof Error ? handleErr.message : 'An unknown error occurred.'
-      }. Original error: ${err instanceof Error ? err.message : 'An unknown error occurred.'}`
+        handleErr instanceof Error
+          ? handleErr.message
+          : "An unknown error occurred."
+      }. Original error: ${err instanceof Error ? err.message : "An unknown error occurred."}`
     );
 
     try {
-      await setVideo(videoId, {
-        status: VideoStatus.PermanentlyFailed,
-        progress: VideoProgress.Complete,
-        errorMessage: 'Error in handleError: ' + (handleErr instanceof Error ? handleErr.message : 'Unknown error'),
-      });
+      const videoData: Partial<Video> = {
+        status: VideoStatus.PermanentlyFailed, progress: VideoProgress.Complete,
+        errorMessage: `Error in handleError: ${handleErr instanceof Error ? handleErr.message : "Unknown error"}`
+      }
+      await setVideo(videoId, videoData);
     } catch (finalFallbackErr) {
       console.error(
         `Failed to mark video as PermanentlyFailed for video ${videoId}: ${
-          finalFallbackErr instanceof Error ? finalFallbackErr.message : 'An unknown error occurred.'
+          finalFallbackErr instanceof Error
+            ? finalFallbackErr.message
+            : "An unknown error occurred marking video as PermanentlyFailed."
         }`
       );
     }
 
-    if (!res.headersSent) return res.status(200).send('An error occurred while handling the error.');
-    return res
+    if (!res.headersSent) return res.status(200).send("An error occurred while handling the error.");
+    else return res;
   }
 };
