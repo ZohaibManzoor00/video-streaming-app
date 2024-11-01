@@ -1,16 +1,16 @@
 "use client";
 
-import { BorderBeam } from "@/components/magicui/border-beam";
-import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import Link from "next/link";
+import { ArrowRightIcon } from "lucide-react";
+
+import { BorderBeam } from "@/components/magicui/border-beam";
 import { Button } from "../ui/button";
 import TextShimmer from "../magicui/text-shimmer";
-import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
 import VideoDialog from "../magicui/video-dialog";
-import Link from "next/link";
 
 const ease = [0.16, 1, 0.3, 1];
-
 
 function HeroImage() {
   return (
@@ -89,12 +89,12 @@ export default function HeroSection() {
             colorTo="var(--color-two)"
             className="rounded-xl"
           />
-          <img
+          <img 
             src="/hero-dark.png"
             alt="Hero Image"
             className="hidden relative w-full h-full rounded-[inherit] border object-contain dark:block"
           />
-          <img
+          <img 
             src="/hero-light.png"
             alt="Hero Image"
             className="block relative w-full h-full  rounded-[inherit] border object-contain dark:hidden"

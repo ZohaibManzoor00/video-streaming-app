@@ -1,11 +1,12 @@
 "use client";
 import { useState, useRef } from "react";
-import { Video } from "@/firebase/videos";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+// import dynamic from "next/dynamic";
+
+import { Video } from "@/firebase/videos";
 import { formatDuration } from "@/lib/format-video-duration";
-const DashPlayer = dynamic(() => import("./hover-dash-player"), { ssr: false });
+// const DashPlayer = dynamic(() => import("./hover-dash-player"), { ssr: false });
 
 interface VideosListProps {
   videos: Video[];
@@ -43,11 +44,12 @@ export default function VideosList({ videos }: VideosListProps) {
                   src={thumbnailUrl}
                   alt={`Thumbnail for video ${video.id}`}
                   fill
+                  sizes=""
                   className={`object-fill absolute inset-0 ${
                     isHovered ? "opacity-0" : "opacity-100"
                   } transition-opacity duration-200`}
                 />
-                <div
+                {/* <div
                   className={`absolute inset-0 ${
                     isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
                   } transition-opacity duration-200`}
@@ -58,7 +60,7 @@ export default function VideosList({ videos }: VideosListProps) {
                     muted={true}
                     className="w-full h-full object-contain"
                   />
-                </div>
+                </div> */}
                 <div className="absolute bottom-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1 rounded">
                   {formatDuration(String(video?.duration))}
                 </div>

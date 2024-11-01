@@ -10,6 +10,20 @@ initializeApp();
 const firestore = new Firestore();
 const storage = new Storage();
 
+const sanitizeFileName = (fileName: string): string => {
+  // Replace anything that is not a letter, number, underscore,
+  // or hyphen with an underscore
+  let sanitized = fileName.replace(/[^a-zA-Z0-9_]+/g, "_");
+
+  // Combine consecutive underscores into single underscore
+  sanitized = sanitized.replace(/_+/g, "_");
+
+  // Remove leading and trailing underscores
+  sanitized = sanitized.replace(/^_+|_+$/g, "");
+
+  return sanitized;
+};
+
 export const generateUploadUrl = onCall({maxInstances: 1}, async (request) => {
   if (!request.auth) {
     throw new functions.https.HttpsError(
@@ -19,21 +33,23 @@ export const generateUploadUrl = onCall({maxInstances: 1}, async (request) => {
   }
 
   const auth = request.auth;
-  const data = request.data;
+  const {bucket, fileName, fileExtension} = request.data;
 
-  const bucket = storage.bucket(data.bucket);
+  const gCloudBucket = storage.bucket(bucket);
+  const parsedFilename = sanitizeFileName(fileName);
 
   // Generate unique filename for upload
-  const fileName = `${auth.uid}-${Date.now()}.${data.fileExtension}`;
+  const uniqueFilename =
+    `${parsedFilename}-${auth.uid}-${Date.now()}.${fileExtension}`;
 
   // Get v4 signed URL for uploading file
-  const [url] = await bucket.file(fileName).getSignedUrl({
+  const [url] = await gCloudBucket.file(uniqueFilename).getSignedUrl({
     version: "v4",
     action: "write",
     expires: Date.now() + 15 * 60 * 1000, // user uploads within 15 minutes
   });
 
-  return {url, fileName};
+  return {url, uniqueFilename};
 });
 
 // -- USER --
@@ -56,12 +72,13 @@ export const getVideos = onCall({maxInstances: 1}, async () => {
   try {
     const querySnapshot = await firestore
       .collection(videoCollectionId)
-      .where("progress", "==", "Completed")
+      .where("progress", "==", "complete")
+      // .orderBy("createdAt")
       .get();
 
     return querySnapshot.docs.map((doc) => doc.data());
-  } catch {
-    console.error("Error fetching completed videos");
+  } catch (err) {
+    console.error("Error fetching completed videos", err);
     throw new Error("Failed to fetch completed videos.");
   }
 });

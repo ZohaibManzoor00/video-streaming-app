@@ -1,13 +1,12 @@
 import { httpsCallable } from "firebase/functions";
-import { functions } from "./firebase";
+import { functions , rawVideoBucketName } from "./firebase";
 
 const generateUploadUrlFunction = httpsCallable(functions, "generateUploadUrl");
 const getVideosFunction = httpsCallable(functions, "getVideos");
 const checkVideoStatusFunction = httpsCallable(functions, "checkVideoStatus");
 const incrementViewCountFunction = httpsCallable(functions, "incrementViewCount");
 
-const rawVideoBucketName = "marcy-yt-raw-videos";
-
+// ? Add processing start and end times
 export type Video = {
   id?: string;
   uid?: string;
@@ -15,11 +14,11 @@ export type Video = {
   status?: VideoStatus;
   progress?: VideoProgress;
   transcodingProgress?: number;
-  retryCount?: number;
+  retryCount?: number; // ! change to processingAttempts
   errorMessage?: string;
-  duration?: number,
-  createdAt?: Date,
-  viewCount?: number
+  duration?: number;
+  createdAt?: Date;
+  viewCount?: number;
 };
 
 export enum VideoStatus {
@@ -33,6 +32,7 @@ export enum VideoProgress {
   Initializing = "initializing",
   Downloading = "downloading",
   Transcoding = "transcoding",
+  GeneratingThumbnail = "generating thumbnail",
   Uploading = "uploading",
   Complete = "complete",
 }
@@ -40,6 +40,7 @@ export enum VideoProgress {
 export const uploadVideo = async (file: File) => {
   const response: any = await generateUploadUrlFunction({
     fileExtension: file.name.split(".").pop(),
+    fileName: file.name,
     bucket: rawVideoBucketName,
   });
 
@@ -47,9 +48,7 @@ export const uploadVideo = async (file: File) => {
   const uploadResult = await fetch(response?.data?.url, {
     method: "PUT",
     body: file,
-    headers: {
-      "Content-Type": file.type,
-    },
+    headers: { "Content-Type": file.type },
   });
 
   if (!uploadResult.ok) throw new Error("Failed Upload");
@@ -61,7 +60,7 @@ export const uploadVideo = async (file: File) => {
 
 export const checkVideoStatus = async (fileName: any) => {
   const res = await checkVideoStatusFunction({ fileName });
-  return res.data as { status: Video["status"], progress: Video["progress"]};
+  return res.data as { status: VideoStatus, progress: VideoProgress };
 }
 
 export const getVideos = async () => {
@@ -72,7 +71,6 @@ export const getVideos = async () => {
 export const handlePlay = async (videoId: string) => {
   try {
     await incrementViewCountFunction({ videoId });
-    console.log("View count incremented successfully");
   } catch (error) {
     console.error("Error incrementing view count:", error);
   }

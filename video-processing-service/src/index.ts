@@ -23,12 +23,10 @@ app.post("/process-video", async (req: Request, res: Response) => {
     return handleError(res, err, null, "Error Reading queue message", null, null);
   }
 
-  // * <UID>-<DATE>.<EXTENSION> | <FILENAME>.<EXTENSION>
+  // * <FILENAME>-<UID>-<DATE>.<EXTENSION>
   const inputFileName = path.basename(filename);
-    // ? modifies and doesn't recognize OG filename .replace(/[^a-zA-Z0-9.\-_]/g, "");
-  const videoIdWithExtension = inputFileName.split(".")[0];
-  const videoId = videoIdWithExtension;
-  const uid = videoId.includes("-") ? videoId.split("-")[0] : videoId;
+  const [videoId] = inputFileName.split(".");
+  const uid = videoId.split("-")[1]
   const outputFolderName = videoId;
 
   console.info(`[${videoId}] Initializing video processing...`);
@@ -71,7 +69,7 @@ app.post("/process-video", async (req: Request, res: Response) => {
     return handleError(res, err, videoId, "Transcoding failed", inputFileName, outputFolderName);
   }
 
-  console.info(`[${videoId}] Generating thumbnail...`);
+  console.info(`[${videoId}] Processing thumbnail...`);
   try {
     await setVideo(videoId, { progress: VideoProgress.GeneratingThumbnail });
     await generateThumbnail(videoId, inputFileName, outputFolderName);

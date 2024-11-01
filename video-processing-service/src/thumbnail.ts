@@ -20,12 +20,15 @@ export const generateThumbnail = async(videoId: string, filename: string, output
   try {
     const inputVideoPath = `${localRawPath}/${filename}`;
     const outputImagePath = `${localProcessedPath}/${outputFolder}/thumbnail.jpg`;
+    console.info(`[${videoId}] Finding first non-black frame...`);
     const blackEndTime = await getFirstNonBlackFrameTime(inputVideoPath);
+    console.info(`[${videoId}] Extracting video duration...`);
     const videoDuration = await getVideoDuration(inputVideoPath);
     await setVideo(videoId, { duration: videoDuration }); // TODO: Extract duration logic
     let timestamp = blackEndTime + 0.1;
     // Ensure timestamp is within video duration otherwise use middle of the video
     if (timestamp >= videoDuration) timestamp = Math.max(0, videoDuration / 2);
+    console.info(`[${videoId}] Extracting thumbnail...`);
     await extractThumbnailAtTime(inputVideoPath, outputImagePath, timestamp);
   } catch (err: unknown) {
     console.error("Error generating thumbnail:", err);

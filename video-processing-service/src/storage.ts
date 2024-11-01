@@ -43,9 +43,7 @@ export function readQueueMessage(req: Request): string {
     throw new Error("Invalid Pub/Sub message format: Missing 'data' field.");
   }
 
-  const messageData = Buffer.from(req.body.message.data, "base64").toString(
-    "utf8"
-  );
+  const messageData = Buffer.from(req.body.message.data, "base64").toString("utf8");
 
   let data;
   try {

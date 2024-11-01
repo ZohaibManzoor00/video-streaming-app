@@ -1,13 +1,12 @@
 "use client";
 
-import { uploadVideo, Video } from "@/firebase/videos";
+import { uploadVideo, VideoProgress, VideoStatus } from "@/firebase/videos";
 import { useState } from "react";
-
 
 export default function UploadVideo() {
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState<Video["progress"]>(undefined);
-  const [uploadState, setUploadState] = useState<Video["status"]>(undefined);
+  const [progress, setProgress] = useState<VideoProgress | null>(null);
+  const [uploadState, setUploadState] = useState<VideoStatus | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
@@ -17,7 +16,7 @@ export default function UploadVideo() {
   const handleUpload = async (file: File) => {
     try {
       setUploading(true);
-      const { filename } = await uploadVideo(file);
+      const res = await uploadVideo(file);
       setUploading(false);
     } catch (error) {
       alert(`Failed to upload file: ${error}`);
@@ -27,12 +26,10 @@ export default function UploadVideo() {
   return (
     <>
       {uploading || uploadState ? (
-        <p className="text-slate-200 text-lg">
-          Uploading Status: {uploadState} Progress: {progress && progress}
-        </p>
+        <p className="text-slate-200 text-lg">Uploading</p>
       ) : (
         <label className="flex gap-x-2 cursor-pointer p-1">
-          <p className="text-slate-200">Video</p>
+          <p className="text-slate-200">Upload a Video</p>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
