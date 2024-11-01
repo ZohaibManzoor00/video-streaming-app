@@ -1,10 +1,13 @@
 "use client";
 
-import { signOut, signInWithGoogle } from "@/firebase/firebase";
 import { useState } from "react";
-import { useAuthContext } from "@/context/authContext";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+
+import { signOut, signInWithGoogle } from "@/firebase/firebase";
+import { useAuthContext } from "@/context/authContext";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "./ui/button";
 
 export default function SignInOut() {
   const { user, loading } = useAuthContext();
@@ -16,7 +19,7 @@ export default function SignInOut() {
   const handleSignIn = async () => {
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
+      // router.push("/dashboard");
     } catch (err: any) {
       setError("Failed to sign in. Please try again." + err);
     }
@@ -39,12 +42,15 @@ export default function SignInOut() {
       ) : (
         <>
           <button
-            className={`bg-secondary rounded-full py-3 px-6 text-sm mr-2 min-w-28`}
+            className={cn(
+              buttonVariants({ variant: "secondary" }),
+              "mr-6 text-sm"
+            )}
           >
             Join Now
           </button>
           <button className="text-white opacity-70" onClick={handleSignIn}>
-            {error ? "Try Again?" : "Login"}
+            Login
           </button>
         </>
       )}

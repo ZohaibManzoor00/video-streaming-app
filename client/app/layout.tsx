@@ -1,10 +1,11 @@
+import type { Metadata, Viewport } from "next";
+import { cn } from "@/lib/utils";
+import { Inter as FontSans } from "next/font/google";
+import "./globals.css";
+
 import { AuthProvider } from "@/context/authContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "@/lib/utils";
-import type { Metadata, Viewport } from "next";
-import { Inter as FontSans } from "next/font/google";
-import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import Footer from "@/components/footer";
 
@@ -14,8 +15,8 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "Marcy Learn",
-  description: "LMS for The Marcy Lab School",
+  title: "MyTube",
+  description: "Youtube clone: Your Story, Your Tube",
 };
 
 export const viewport: Viewport = {

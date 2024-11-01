@@ -4,8 +4,10 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlignJustify, XIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { buttonVariants } from "./ui/button";
+import SignInOut from "./sign-in";
 
 const menuItem = [
   {
@@ -99,12 +101,13 @@ export function SiteHeader() {
     <>
       <header className="fixed left-0 top-0 z-50 w-full translate-y-[-1rem] animate-fade-in border-b opacity-0 backdrop-blur-[12px] [--animation-delay:600ms]">
         <div className="container flex h-[3.5rem] items-center justify-between">
-          <Link className="text-md flex items-center" href="/">
-            Streamr
+          <Image src="/myTube-Logo.png" height={50} width={20} alt="Logo" />
+          <Link className="text-md flex items-center pl-1" href="/">
+            MyTube
           </Link>
 
           <div className="ml-auto flex h-full items-center">
-            <Link className="mr-6 text-sm" href="/signin">
+            {/* <Link className="mr-6 text-sm" href="/signin">
               Log in
             </Link>
             <Link
@@ -115,7 +118,8 @@ export function SiteHeader() {
               href="/signup"
             >
               Sign up
-            </Link>
+            </Link> */}
+            <SignInOut />
           </div>
           <button
             className="ml-6 md:hidden"
@@ -141,7 +145,7 @@ export function SiteHeader() {
         >
           <div className="container flex h-[3.5rem] items-center justify-between">
             <Link className="text-md flex items-center" href="/">
-              Streamr
+              MyTube
             </Link>
 
             <button

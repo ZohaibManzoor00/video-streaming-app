@@ -6,8 +6,8 @@ import { Button } from "./ui/button";
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme();
-  // Don't show in production
-  if (process.env.NODE_ENV === "production") return null;
+  // TODO: Don't show in production
+  // if (process.env.NODE_ENV === "production") return null;
   return (
     <Button
       variant="ghost"

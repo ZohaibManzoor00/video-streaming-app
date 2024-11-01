@@ -1,22 +1,22 @@
 import { credential } from "firebase-admin";
 import { initializeApp } from "firebase-admin/app";
-import { Firestore, Timestamp, FieldValue, FirebaseFirestoreError } from "firebase-admin/firestore";
+import { Firestore, Timestamp, FirebaseFirestoreError } from "firebase-admin/firestore";
 
 initializeApp({ credential: credential.applicationDefault() });
 export const firestore = new Firestore();
 const videoCollectionId = "videos";
 
-export type Video = {
+export type Video = { // ? Add processing start and end times
   id?: string;
   uid?: string;
   filename?: string;
   status?: VideoStatus;
   progress?: VideoProgress;
   transcodingProgress?: number;
-  retryCount?: number;
+  retryCount?: number; // ! change to processingAttempts
   errorMessage?: string;
-  duration?: number,
-  createdAt?: Timestamp | FieldValue
+  duration?: number;
+  createdAt?: Timestamp;
 };
 
 export enum VideoStatus {

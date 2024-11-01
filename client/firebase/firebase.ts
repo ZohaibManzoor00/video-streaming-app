@@ -20,6 +20,7 @@ const firebase = initializeApp(firebaseConfig);
 const auth = getAuth(firebase);
 
 export const functions = getFunctions();
+// export const rawVideoBucketName = process.env.RAW_GOOGLE_CLOUD_BUCKET;
 export const rawVideoBucketName = "marcy-yt-raw-videos";
 export const rawImageBucketName = "marcy-yt-raw-images";
 

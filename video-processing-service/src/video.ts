@@ -1,6 +1,6 @@
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
-import { FieldValue } from "firebase-admin/firestore";
+import { Timestamp } from "firebase-admin/firestore";
 
 import { firestore, setVideo, Video, VideoProgress, VideoStatus } from "./firebase";
 import { cleanup, deleteRawVideoFromBucket, 
@@ -46,7 +46,7 @@ export const initializeVideoProcessing = async (videoId: string, uid: string): P
       status: VideoStatus.Processing,
       progress: VideoProgress.Initializing,
       retryCount: newRetryCount,
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: Timestamp.now(),
     };
 
     return await setVideo(videoId, videoData, transaction);
